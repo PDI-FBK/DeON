@@ -1,5 +1,7 @@
 # !/bin/bash
 
+set -e
+
 PYTHON=python3
 VENV_DIR=.venv
 REQUIREMENTS=requirements.txt
