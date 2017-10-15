@@ -10,7 +10,11 @@ import deon.data.sources
 import deon.data.dataset
 
 DEFAULT_SOURCES = [
-    deon.data.sources.W00DataSource.KEY
+    deon.data.sources.W00DataSource.KEY,
+    deon.data.sources.MsResearchSource.KEY,
+    deon.data.sources.WCLDataSource.KEY,
+    deon.data.sources.WCLAllDefDataSource.KEY,
+    deon.data.sources.WCLAllNoDefDataSource.KEY
 ]
 
 # pylint: disable=C0301
@@ -38,6 +42,6 @@ def main():
         tmp=ARGS.tmp,
         force=ARGS.force)
 
-    
+
 if __name__ == '__main__':
     main()

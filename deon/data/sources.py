@@ -4,13 +4,22 @@ import abc
 import os
 import zipfile
 import urllib.request
-
+import tarfile
 
 def resolve(key):
     """Resolve the DataSource by its key."""
     if key == W00DataSource.KEY:
         return W00DataSource()
-    raise KeyError('Invalid key: `{}`'.format(key))
+    elif key == MsResearchSource.KEY:
+        return MsResearchSource()
+    elif key == WCLDataSource.KEY:
+        return WCLDataSource()
+    elif key == WCLAllDefDataSource.KEY:
+        return WCLAllDefDataSource()
+    elif key == WCLAllNoDefDataSource.KEY:
+        return WCLAllNoDefDataSource()
+
+    raise KeyError('Invalid asdfss: `{}, {}`'.format(key))
 
 
 class DataSource(object):
@@ -38,10 +47,10 @@ class DataSource(object):
     @abc.abstractmethod
     def pull(self, dest):
         """Pull the remote data and creates one (or more) TSV files locally.
-        
+
         Arguments:
           dest: a path to a directory to be used for persistence.
-        
+
         Returns:
           a file path.
         """
@@ -78,6 +87,126 @@ class W00DataSource(DataSource):
 
                 def_flag = 1 if meta.startswith('1') else 0
                 out_line = '{}\t{}\t{}\n'.format(self.KEY, line, def_flag)
+                f_out.write(out_line)
+
+        return f_out_path
+
+class MsResearchSource(DataSource):
+    KEY = 'msresearch'
+    _LINK = 'http://taln.upf.edu/web_old/system/files/resources_files/ms_research_defs-nodefs.txt'
+    _OUT_FILE = 'msresearch.tsv'
+
+    def pull(self, dest):
+        f_path = os.path.join(dest, 'msresearch.txt')
+        with open(f_path, 'wb') as f_out:
+            f_out.write(urllib.request.urlopen(self._LINK).read())
+
+        source = open(f_path)
+        f_out_path = os.path.join(dest, self._OUT_FILE)
+        with open(f_out_path, 'w') as f_out:
+            for line in source:
+                line = line.strip()
+                if not line:
+                    continue
+
+                is_def, phrase = line.split('/', 1)
+                def_flag = is_def == 'DEF'
+                out_line = "{}\t{}\t{}\n"\
+                            .format(self.KEY, phrase, 1 if def_flag else 0)
+                f_out.write(out_line)
+
+        return f_out_path
+
+class WCLDataSource(DataSource):
+    KEY = 'wcl'
+    _LINK = 'http://lcl.uniroma1.it/wcl/wcl_datasets_v1.2.tar.gz'
+    _OUT_FILE = 'wcl.tsv'
+    _SOURCE_UKWAC = 'wcl_datasets_v1.2/ukwac/ukwac_estimated_recall.txt'
+    _SOURCE_WIKI_GOOD = 'wcl_datasets_v1.2/wikipedia/wiki_good.txt'
+    _SOURCE_WIKI_BAD = 'wcl_datasets_v1.2/wikipedia/wiki_bad.txt'
+
+    def pull(self, dest):
+        f_path = os.path.join(dest, 'wcl.tar.gz')
+        with open(f_path, 'wb') as f_out:
+            f_out.write(urllib.request.urlopen(self._LINK).read())
+        with tarfile.open(f_path, 'r:gz') as targz:
+            targz.extractall(dest)
+
+        source_uwak = os.path.join(dest, self._SOURCE_UKWAC)
+        source_good = os.path.join(dest, self._SOURCE_WIKI_GOOD)
+        source_bad = os.path.join(dest, self._SOURCE_WIKI_BAD)
+
+        sources = [(source_uwak, True), (source_good, True), (source_bad, False)]
+        for source, _ in sources:
+            assert os.path.exists(source)
+
+        f_out_path = os.path.join(dest, self._OUT_FILE)
+        for source, _def in sources:
+            prevLine = ''
+            with open(f_out_path, 'a') as f_out:
+                for i,line in enumerate(open(source)):
+                    line = line.replace('\t', '')
+                    line = line.strip('! #\n')
+                    if not line:
+                        continue
+                    if i%2 == 0:
+                        prevLine = line
+                        continue
+
+                    subject, _ = line.split(':', maxsplit=1)
+                    phrase = prevLine.replace('TARGET', subject)
+                    out_line = '{}\t{}\t{}\n'\
+                                .format(self.KEY, phrase, 1 if _def else 0)
+
+                    f_out.write(out_line)
+
+        return f_out_path
+
+class WCLAllDefDataSource(DataSource):
+    KEY = 'wclalldef'
+    _LINK = 'https://bitbucket.org/luisespinosa/defext/raw/8e53c832ddce6525c8a73148f98b6506226e06e2/resources/wcl_all_def.txt'
+    _OUT_FILE = 'wclalldef.tsv'
+
+    def pull(self, dest):
+        f_path = os.path.join(dest, 'wclalldef.txt')
+        with open(f_path, 'wb') as f_out:
+            f_out.write(urllib.request.urlopen(self._LINK).read())
+
+        source = open(f_path)
+        f_out_path = os.path.join(dest, self._OUT_FILE)
+        with open(f_out_path, 'a') as f_out:
+            for line in source:
+                lsLine = line.split()
+                res = []
+                for word in lsLine:
+                    ws = word.split('/')
+                    if len(ws) == 2:
+                        word = ws[0]
+                    res.append(word)
+
+                out_line = '{}\t{}\t{}\n'\
+                            .format(self.KEY, " ".join(res), 1)
+                f_out.write(out_line)
+
+        return f_out_path
+
+class WCLAllNoDefDataSource(DataSource):
+    KEY = 'wclallnodef'
+    _LINK = 'https://bitbucket.org/luisespinosa/defext/raw/8e53c832ddce6525c8a73148f98b6506226e06e2/resources/wcl_all_nodef.txt'
+    _OUT_FILE = 'wclallnodef.tsv'
+
+    def pull(self, dest):
+        f_path = os.path.join(dest, 'wclallnodef.txt')
+        with open(f_path, 'wb') as f_out:
+            f_out.write(urllib.request.urlopen(self._LINK).read())
+
+        source = open(f_path)
+        f_out_path = os.path.join(dest, self._OUT_FILE)
+        with open(f_out_path, 'a') as f_out:
+            for line in source:
+                line = line.strip()
+                out_line = '{}\t{}\t{}\n'\
+                            .format(self.KEY, line, 0)
                 f_out.write(out_line)
 
         return f_out_path
