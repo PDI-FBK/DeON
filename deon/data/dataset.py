@@ -54,22 +54,15 @@ def _split(dataset_file, split, destination):
                 nodefs.append(line)
 
     def_split_indexes = _get_split_index(len(defs), split)
-    print(def_split_indexes)
-    print("defs", len(defs))
     nodef_split_indexes = _get_split_index(len(nodefs), split)
-    print(nodef_split_indexes)
-    print("nodefs", len(nodefs))
 
     splitted_defs = [defs[i:j] for i,j in def_split_indexes]
     splitted_nodefs = [nodefs[i:j] for i,j in nodef_split_indexes]
 
-    print([len(x) for x in splitted_defs])
-    print([len(x) for x in splitted_nodefs])
 
     for i in range(len(split)):
         res = splitted_defs[i] + splitted_nodefs[i]
         source_path = destination + '/' + source[i]
-        print(source_path)
         with open(source_path, 'w') as source_file:
             for data in res:
                 source_file.write(data)
