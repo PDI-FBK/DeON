@@ -14,13 +14,9 @@ def resolve(key):
     elif key == MsResearchSource.KEY:
         return MsResearchSource()
     elif key == WCLDataSource.KEY:
-        return WCLDataSource()
-    elif key == WCLAllDefDataSource.KEY:
-        return WCLAllDefDataSource()
-    elif key == WCLAllNoDefDataSource.KEY:
-        return WCLAllNoDefDataSource()
+        return WCLDataSource() 
 
-    raise KeyError('Invalid asdfss: `{}, {}`'.format(key))
+    raise KeyError('Invalid key: `{}`'.format(key))
 
 
 class DataSource(object):
@@ -160,54 +156,5 @@ class WCLDataSource(DataSource):
                                 .format(self.KEY, phrase, 1 if _def else 0)
 
                     f_out.write(out_line)
-
-        return f_out_path
-
-class WCLAllDefDataSource(DataSource):
-    KEY = 'wclalldef'
-    _LINK = 'https://bitbucket.org/luisespinosa/defext/raw/8e53c832ddce6525c8a73148f98b6506226e06e2/resources/wcl_all_def.txt'
-    _OUT_FILE = 'wclalldef.tsv'
-
-    def pull(self, dest):
-        f_path = os.path.join(dest, 'wclalldef.txt')
-        with open(f_path, 'wb') as f_out:
-            f_out.write(urllib.request.urlopen(self._LINK).read())
-
-        source = open(f_path)
-        f_out_path = os.path.join(dest, self._OUT_FILE)
-        with open(f_out_path, 'a') as f_out:
-            for line in source:
-                lsLine = line.split()
-                res = []
-                for word in lsLine:
-                    ws = word.split('/')
-                    if len(ws) == 2:
-                        word = ws[0]
-                    res.append(word)
-
-                out_line = '{}\t{}\t{}\n'\
-                            .format(self.KEY, " ".join(res), 1)
-                f_out.write(out_line)
-
-        return f_out_path
-
-class WCLAllNoDefDataSource(DataSource):
-    KEY = 'wclallnodef'
-    _LINK = 'https://bitbucket.org/luisespinosa/defext/raw/8e53c832ddce6525c8a73148f98b6506226e06e2/resources/wcl_all_nodef.txt'
-    _OUT_FILE = 'wclallnodef.tsv'
-
-    def pull(self, dest):
-        f_path = os.path.join(dest, 'wclallnodef.txt')
-        with open(f_path, 'wb') as f_out:
-            f_out.write(urllib.request.urlopen(self._LINK).read())
-
-        source = open(f_path)
-        f_out_path = os.path.join(dest, self._OUT_FILE)
-        with open(f_out_path, 'a') as f_out:
-            for line in source:
-                line = line.strip()
-                out_line = '{}\t{}\t{}\n'\
-                            .format(self.KEY, line, 0)
-                f_out.write(out_line)
 
         return f_out_path
