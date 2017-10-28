@@ -6,6 +6,7 @@ import zipfile
 import urllib.request
 import tarfile
 
+
 def resolve(key):
     """Resolve the DataSource by its key."""
     if key == W00DataSource.KEY:
@@ -144,12 +145,12 @@ class WCLDataSource(DataSource):
         for source, _def in sources:
             prevLine = ''
             with open(f_out_path, 'a') as f_out:
-                for i,line in enumerate(open(source)):
+                for i, line in enumerate(open(source)):
                     line = line.replace('\t', '')
                     line = line.strip('! #\n')
                     if not line:
                         continue
-                    if i%2 == 0:
+                    if i % 2 == 0:
                         prevLine = line
                         continue
 
