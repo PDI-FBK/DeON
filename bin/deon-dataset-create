@@ -12,7 +12,8 @@ import deon.data.dataset
 DEFAULT_SOURCES = [
     deon.data.sources.W00DataSource.KEY,
     deon.data.sources.MsResearchSource.KEY,
-    deon.data.sources.WCLDataSource.KEY
+    deon.data.sources.WCLDataSource.KEY,
+    deon.data.sources.DiffBetweenDataSource.KEY
 ]
 
 # pylint: disable=C0301
