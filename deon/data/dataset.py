@@ -79,7 +79,6 @@ def build(source_keys=('w00',), dest='dataset', split=(80, 20), tmp=None, force=
     do_split = len(split) > 1
     print(source_keys)
     for f_path in [sources.resolve(key).pull(tmp) for key in source_keys]:
-        print(f_path)
         with open(dataset_file, 'a') as df:
             with open(f_path, 'r') as f:
                 for line in f:

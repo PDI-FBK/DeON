@@ -3,6 +3,7 @@ from deon.data.w00.w00 import W00DataSource
 from deon.data.msresearch.msresearch import MsResearchSource
 from deon.data.wcldata.wcldata import WCLDataSource
 from deon.data.diffbetween.difference_between import DiffBetweenDataSource
+from deon.data.dictionary.dictionary import DictionarySource
 
 
 def resolve(key):
@@ -15,5 +16,7 @@ def resolve(key):
         return WCLDataSource()
     elif key == DiffBetweenDataSource.KEY:
         return DiffBetweenDataSource()
+    elif key == DictionarySource.KEY:
+        return DictionarySource()
 
     raise KeyError('Invalid key: `{}`'.format(key))
