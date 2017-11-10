@@ -29,7 +29,7 @@ class MsResearchSource(DataSource):
                 if _def:
                     topic, pos = self._extract_topic_pos(phrase)
                 out_line = "{}\t{}\t{}\t{}\t{}\n"\
-                            .format(phrase, topic, pos, _def, self.KEY, )
+                            .format(phrase, topic, pos, _def, self.KEY)
                 f_out.write(out_line)
         return f_out_path
 

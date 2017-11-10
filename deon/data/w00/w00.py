@@ -1,4 +1,4 @@
-from datasource import DataSource
+from deon.data.datasource import DataSource
 import os
 import urllib.request
 import zipfile
@@ -10,7 +10,7 @@ class W00DataSource(DataSource):
     KEY = 'w00'
     _LINK = 'https://github.com/YipingNUS/DefMiner/raw/master/W00_dataset.zip'
     _SOURCE_WORD = 'W00_dataset/annotated.word'
-    _SOURCE_META = 'W00_dataset/annotated.word'
+    _SOURCE_META = 'W00_dataset/annotated.meta'
     _OUT_FILE = 'w00.tsv'
 
     def pull(self, dest):

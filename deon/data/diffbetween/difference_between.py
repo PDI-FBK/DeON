@@ -133,7 +133,7 @@ class DiffBetweenDataSource(DataSource):
 
     def _saveDefinitionOutput(self, definition, topic, topic_pos, url):
         with open(self.f_out_path, 'a') as f:
-            f.write('{}\t{}\t{}\t{}\n'.format(definition, topic, topic_pos, url))
+            f.write('{}\t{}\t{}\t{}\t{}\n'.format(definition, topic, topic_pos, 1, url))
 
     def _savedLinks(self, folder_path):
         try:

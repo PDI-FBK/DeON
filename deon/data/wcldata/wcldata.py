@@ -1,4 +1,4 @@
-from datasource import DataSource
+from deon.data.datasource import DataSource
 import os
 import urllib.request
 import tarfile
