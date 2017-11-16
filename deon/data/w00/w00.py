@@ -1,4 +1,5 @@
 from deon.data.datasource import DataSource
+import deon.data.util as util
 import os
 import urllib.request
 import zipfile
@@ -27,14 +28,13 @@ class W00DataSource(DataSource):
         assert os.path.exists(source_meta)
 
         f_out_path = os.path.join(dest, self._OUT_FILE)
-        with open(f_out_path, 'w') as f_out:
-            for line, meta in zip(open(source_word), open(source_meta)):
-                line = line.strip()
-                if not line:
-                    continue
+        for line, meta in zip(open(source_word), open(source_meta)):
+            line = line.strip()
+            if not line:
+                continue
 
-                def_flag = 1 if meta.startswith('1') else 0
-                out_line = '{}\t{}\t{}\n'.format(self.KEY, line, def_flag)
-                f_out.write(out_line)
+            def_flag = 1 if meta.startswith('1') else 0
+            util.save_output(f_out_path, line, def_flag, self.KEY)
 
+        print('\tDONE\n')
         return f_out_path
