@@ -9,7 +9,6 @@ class DifferenceBetween():
         self.article = article
 
         self.definitions = {}
-        # topics = self._extractHeaderTopics(link)
         for topic in topics:
             self.definitions[topic] = None
 
