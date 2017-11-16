@@ -15,7 +15,7 @@ class W00DataSource(DataSource):
     _OUT_FILE = 'w00.tsv'
 
     def pull(self, dest):
-        print('Pulling for w00 dataset...')
+        print('Pulling from w00 dataset...')
         f_path = os.path.join(dest, 'w00.zip')
         with open(f_path, 'wb') as f_out:
             f_out.write(urllib.request.urlopen(self._LINK).read())

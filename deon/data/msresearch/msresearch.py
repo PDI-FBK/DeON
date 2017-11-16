@@ -1,4 +1,5 @@
 from deon.data.datasource import DataSource
+import deon.data.util as util
 import os
 import urllib.request
 
@@ -9,6 +10,7 @@ class MsResearchSource(DataSource):
     _OUT_FILE = 'msresearch.tsv'
 
     def pull(self, dest):
+        print('Pulling from msresearch dataset...')
         f_path = os.path.join(dest, 'msresearch.txt')
         with open(f_path, 'wb') as f_out:
             f_out.write(urllib.request.urlopen(self._LINK).read())
@@ -24,13 +26,14 @@ class MsResearchSource(DataSource):
                 is_def, phrase = line.split('/', 1)
                 def_flag = is_def == 'DEF'
                 _def = 1 if def_flag else 0
-                topic = ''
-                pos = ''
+                topic = '?'
+                pos = '?'
                 if _def:
                     topic, pos = self._extract_topic_pos(phrase)
-                out_line = "{}\t{}\t{}\t{}\t{}\n"\
-                            .format(phrase, topic, pos, _def, self.KEY)
-                f_out.write(out_line)
+
+                util.save_output(f_out_path, phrase, _def, self.KEY, topic, pos)
+
+        print('\tDONE\n')
         return f_out_path
 
     def _extract_topic_pos(self, phrase):

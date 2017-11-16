@@ -14,7 +14,7 @@ class WCLDataSource(DataSource):
     _SOURCE_WIKI_BAD = 'wcl_datasets_v1.2/wikipedia/wiki_bad.txt'
 
     def pull(self, dest):
-        print('Pulling for wcl dataset...')
+        print('Pulling from wcl dataset...')
         f_path = os.path.join(dest, 'wcl.tar.gz')
         with open(f_path, 'wb') as f_out:
             f_out.write(urllib.request.urlopen(self._LINK).read())
