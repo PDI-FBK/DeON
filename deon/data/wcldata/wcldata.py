@@ -1,4 +1,5 @@
 from deon.data.datasource import DataSource
+import deon.data.util as util
 import os
 import urllib.request
 import tarfile
@@ -31,21 +32,19 @@ class WCLDataSource(DataSource):
         f_out_path = os.path.join(dest, self._OUT_FILE)
         for source, _def in sources:
             prevLine = ''
-            with open(f_out_path, 'a') as f_out:
-                for i, line in enumerate(open(source)):
-                    line = line.replace('\t', '')
-                    line = line.strip('! #\n')
-                    if not line:
-                        continue
-                    if i % 2 == 0:
-                        prevLine = line
-                        continue
+            for i, line in enumerate(open(source)):
+                line = line.replace('\t', '')
+                line = line.strip('! #\n')
+                if not line:
+                    continue
+                if i % 2 == 0:
+                    prevLine = line
+                    continue
 
-                    subject, _ = line.split(':', maxsplit=1)
-                    phrase = prevLine.replace('TARGET', subject)
-                    out_line = '{}\t{}\t{}\n'\
-                                .format(self.KEY, phrase, 1 if _def else 0)
+                subject, _ = line.split(':', maxsplit=1)
+                phrase = prevLine.replace('TARGET', subject)
+                is_def = 1 if _def else 0
+                util.save_output(f_out_path, phrase, is_def, self.KEY)
 
-                    f_out.write(out_line)
-
+        print('\tDONE\n')
         return f_out_path
