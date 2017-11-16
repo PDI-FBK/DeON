@@ -38,20 +38,13 @@ class MsResearchSource(DataSource):
 
     def _extract_topic_pos(self, phrase):
         topic = phrase.split(' is ')[0].lower()
-        start_pos = 0
-        topic = topic[0: topic.find('(') if topic.find('(') > -1 else len(topic)]
-        if topic.startswith('a '):
-            topic = topic[2:]
-            start_pos = 1
-        elif topic.startswith('an '):
-            topic = topic[3:]
-            start_pos = 1
-        elif topic.startswith('the '):
-            topic = topic[4:]
-            start_pos = 1
-        else:
-            return topic, ','.join([str(x) for x in \
-                range(start_pos, len(topic.split(' ')))])
+        topic = topic.split('(')[0].strip()
 
-        return topic, ','.join([str(x) for x in \
-                range(start_pos, len(topic.split(' ')) + 1)])
+        topics = topic.split()
+        start = 0
+        if topics[0] in set(['a', 'an', 'the']):
+            start = 1
+
+        _t = ' '.join(topics[start:])
+        _p = ','.join([str(x) for x in range(start, len(topics))])
+        return _t, _p
