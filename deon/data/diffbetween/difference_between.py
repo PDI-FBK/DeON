@@ -77,11 +77,11 @@ class DiffBetweenDataSource(DataSource):
 
                 defs = self._extract_topics_definitions_from(article, topics)
                 for _def in defs:
-                    self._saveOutput(_def[0], _def[1], _def[2], 1, file_name)
+                    util.save_output(self.f_out_path, _def[0], 1, file_name, _def[1], _def[2])
 
                 nodefs = self._extract_no_def_from_file(article, topics)
                 for _nodef in nodefs:
-                    self._saveOutput(_nodef, '?', '?', 0, file_name)
+                    util.save_output(self.f_out_path, _nodef, 0, file_name, '?', '?')
             except:
                 print('Smth wrong with', file_path)
 
@@ -186,10 +186,6 @@ class DiffBetweenDataSource(DataSource):
             topics.append(_t.replace('-', ' '))
 
         return topics
-
-    def _saveOutput(self, definition, topic, topic_pos, _def, url):
-        with open(self.f_out_path, 'a') as f:
-            f.write('{}\t{}\t{}\t{}\t{}\n'.format(definition, topic, topic_pos, _def, url))
 
     def _extractLink(self, article):
         return article.find('header').find('a').get('href')
