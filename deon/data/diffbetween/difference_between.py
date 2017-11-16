@@ -74,10 +74,11 @@ class DiffBetweenDataSource(DataSource):
                 article = BeautifulSoup(open(file_path), "html.parser")\
                           .find('article')
                 topics = self._extractTopics(article, file_name)
-                # defs = self._extract_topics_definitions_from(article, topics)
-                # for _def in defs:
-                #     self._saveOutput(_def[0], _def[1], _def[2], 1, file_name)
-                # print(file_name)
+
+                defs = self._extract_topics_definitions_from(article, topics)
+                for _def in defs:
+                    self._saveOutput(_def[0], _def[1], _def[2], 1, file_name)
+
                 nodefs = self._extract_no_def_from_file(article, topics)
                 for _nodef in nodefs:
                     self._saveOutput(_nodef, '?', '?', 0, file_name)
