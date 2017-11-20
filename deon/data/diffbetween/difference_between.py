@@ -1,14 +1,13 @@
 from deon.data.datasource import DataSource
-from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup
-from pathlib import Path
 import deon.data.util as util
 
-import time
 import os
 import re
 
-from deon.data.diffbetween.difference_between_definition import DifferenceBetween
+from deon.data.diffbetween.definitions import DifferenceBetween
+from deon.data.diffbetween.no_definitions import NoDefinitions
+from deon.data.diffbetween.downloader import Downloader
 
 
 class DiffBetweenDataSource(DataSource):
@@ -16,53 +15,26 @@ class DiffBetweenDataSource(DataSource):
 
     KEY = 'diffbetween'
     _PAGE_FOLDER = 'diffbetween'
-    _OUT_FILE = 'diffbetween.tsv'
-    BLACKLIST = ['he','she','it','this','these','therefore','they','her','his','posted on','difference','help us', 'although', 'those', 'CC BY']
-    f_out_path = ''
+    _OUT_FILES = ['diffbetween.def.tsv', 'diffbetween.nodef.tsv', 'diffbetween.anafora.tsv', 'diffbetween.wcl.tsv']
 
-    def pull(self, dest):
+    def pull(self, dest, download):
         print('Pulling from diffbetween dataset...')
-
-        self.f_out_path = os.path.join(dest, self._OUT_FILE)
+        self.dest = dest
+        self.f_out_path = os.path.join(dest, self._OUT_FILES[0])
         folder_path = '{}/{}'.format(dest, self._PAGE_FOLDER)
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
-        self._save_locally(folder_path)
-        print('\n')
+        if download:
+            downloader = Downloader(folder_path)
+            downloader.save_locally()
+            print('\n')
+
         self._extract_from(folder_path)
         print('\n\tDONE\n')
         return self.f_out_path
 
-    def _save_locally(self, folder_path):
-        try:
-            url = 'http://www.differencebetween.com/page/1/'
-            saved_links = set(os.listdir(folder_path))
-            i = 0
-            while url is not None:
-                page = self._getHtmlPage(url)
-                soup_page = BeautifulSoup(page, 'html5lib')
-                articles = soup_page.find_all('article')
 
-                links = [self._extractLink(article) for article in articles]
-                for link in links:
-                    i += 1
-                    util.print_progress('Saving locally ({})'.format(len(saved_links)), i)
-
-                    if link in saved_links:
-                        continue
-
-                    self._savePage(link, folder_path)
-                    saved_links.add(self._get_name_from(link))
-                    time.sleep(1)
-
-                url = self._getNextUrl(soup_page)
-                time.sleep(2)
-        except:
-            print('\tSomething wrong happend processing {}'.format(url))
-            print('\tRetrying again in 5 seconds...')
-            time.sleep(5)
-            self._save_locally(folder_path)
 
     def _extract_from(self, folder_path):
         files = os.listdir(folder_path)
@@ -70,74 +42,60 @@ class DiffBetweenDataSource(DataSource):
             util.print_progress('Extracting def/nodef ', i + 1, len(files))
 
             file_path = '{}/{}'.format(folder_path, file_name)
-            try:
-                article = BeautifulSoup(open(file_path), "html.parser")\
-                          .find('article')
-                topics = self._extractTopics(article, file_name)
+            article = BeautifulSoup(open(file_path), "html.parser").find('article')
+            topics = self._extractTopics(article, file_name)
 
-                defs = self._extract_topics_definitions_from(article, topics)
-                for _def in defs:
-                    util.save_output(self.f_out_path, _def[0], 1, file_name, _def[1], _def[2])
+            defs = self._save_defs(article, topics, file_name)
 
-                nodefs = self._extract_no_def_from_file(article, topics)
-                for _nodef in nodefs:
-                    util.save_output(self.f_out_path, _nodef, 0, file_name, '?', '?')
-            except:
-                print('Smth wrong with', file_path)
+            no_definition = NoDefinitions(article, topics)
+            self._save_nodefs(no_definition, file_name)
+            self._save_properties(no_definition, set(defs), file_name)
+            self._save_anafora(no_definition, file_name)
 
-    def _pageExist(self, link, folder_path):
-        file_name = link.split('/')[-2]
-        file = Path('{}/{}'.format(folder_path, file_name))
-        return file.is_file()
+    def _save_defs(self, article, topics, file_name):
+        defs = self._extract_topics_definitions_from(article, topics)
+        file = os.path.join(self.dest, self._OUT_FILES[0])
+        for _def in defs:
+            util.save_output(file, _def[0], 1, file_name, _def[1], _def[2])
+        return defs
 
-    def _get_name_from(self, link):
-        return link.split('/')[-2]
+    def _save_nodefs(self, no_definition, file_name):
+        nodefs = no_definition.extract_no_def()
+        file = os.path.join(self.dest, self._OUT_FILES[1])
+        for _nodef in nodefs:
+            util.save_output(file, _nodef, 0, file_name, '?', '?')
+        return nodefs
 
-    def _savePage(self, link, folder_path):
-        file_name = self._get_name_from(link)
-        page = self._getHtmlPage(link)
-        f_out_path = os.path.join(folder_path, file_name)
-        with open(f_out_path, 'wb') as f:
-            f.write(page)
+    def _save_properties(self, no_definition, defs, file_name):
+        properties = no_definition.extract_no_def_properties(defs)
+        file = os.path.join(self.dest, self._OUT_FILES[3])
+        for p in properties:
+            sentence = p[0]
+            topic = p[1]
+            pos = self._topic_position(topic, sentence.lower())
+            util.save_output(file, sentence, '?', file_name, topic, pos)
+        return properties
 
-    def _getNextUrl(self, page):
-        li = page.find("li", {"class": "pagination-next"})
-        if li is None:
-            return None
-        return li.find('a').get('href')
-
-    def _getHtmlPage(self, link):
-        return urlopen(Request(link, headers={'User-Agent': 'Mozilla/5.0'})).read()
-
-    def _extract_no_def_from_file(self, article, topics):
-        nodef_ls = []
-        article_txt = ' '.join([p.get_text() for p in article.find_all('p')])
-        article_txt = ' '.join(article_txt.split())
-        for sentence in re.split('[?!.:]+ ', article_txt):
-            sentence = ' '.join(sentence.split())
-            _sentence = set(sentence.lower().replace(',', ' ').split())
-            _topics = set([item for sublist in [top.split() for top in topics] for item in sublist])
-
-            if _topics.intersection(_sentence):
-                continue
-
-            if len(_sentence) < 4:
-                continue
-
-            sentence = re.sub('[^\w,.\' /\\()-]', '', sentence).strip()
-            if sentence.lower().startswith(tuple(self.BLACKLIST)):
-                continue
-
-            nodef_ls.append(sentence)
-        return nodef_ls
-
-    def _is_a_definition(self, topic, sentence):
-        return re.match(r"^((a)|(an) )?{} ((is)|(are)).+"
-                .format(topic), sentence)
+    def _save_anafora(self, no_definition, file_name):
+        anaforas = no_definition.extract_anafora()
+        file = os.path.join(self.dest, self._OUT_FILES[2])
+        for anaf in anaforas:
+            util.save_output(file, anaf, '?', file_name, '?', '?')
 
     def _topic_position(self, topic, sentence):
-        pos = [str(x) for x in range(sentence.find(topic), len(topic.split()))]
-        return ','.join(pos)
+        topics = topic.split()
+        words = sentence.split()
+        indexes = []
+        for i, word in enumerate(words):
+            if word == topics[0]:
+                indexes.append(i)
+        for index in indexes:
+            i = index
+            for topic in topics:
+                if words[i] != topic:
+                    break
+            break
+        return ','.join([str(x) for x in range(index, (index + len(topics)))])
 
     def _extract_topics_definitions_from(self, article, topics):
         result = []
@@ -150,8 +108,7 @@ class DiffBetweenDataSource(DataSource):
                 lower_def = _def.lower()
 
                 if re.match(r"^((a)|(an) )?{} ((is)|(are)).+".format(topic), lower_def):
-                    pos = [str(x) for x in range(lower_def.find(topic), len(topic.split()))]
-                    pos = ','.join(pos)
+                    pos = self._topic_position(topic, lower_def)
                     result.append((_def, topic, pos))
                     break
         return result
@@ -186,6 +143,3 @@ class DiffBetweenDataSource(DataSource):
             topics.append(_t.replace('-', ' '))
 
         return topics
-
-    def _extractLink(self, article):
-        return article.find('header').find('a').get('href')

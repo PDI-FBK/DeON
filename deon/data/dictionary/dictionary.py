@@ -3,7 +3,7 @@ from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup
 import os
 import time
-import pickle
+import deon.data.util as util
 
 from deon.data.dictionary.dictionary_definition import Dictionary
 
@@ -29,7 +29,7 @@ class DictionarySource(DataSource):
     def _save_locally(self, folder_path):
         count = 0
         try:
-            saved_links = self._saved_links(folder_path)
+            saved_links = set(os.listdir(folder_path))
             url = ''
             for letter in range(ord('a'), ord('z') + 1):
                 url = '{}/list/{}'.format(self._LINK, chr(letter))
@@ -40,35 +40,32 @@ class DictionarySource(DataSource):
                 for i in range(2, total_pages + 1):
                     definition_urls = self._get_word_defs(page)
                     for link in definition_urls:
+                        count += 1
+                        util.print_progress('Saving locally ({})'.format(len(saved_links)), count)
+
                         if link in saved_links:
                             continue
                         self._save_page(folder_path, link)
-                        saved_links.add(link)
+                        saved_links.add(self._get_name_from(link))
 
                     next_url = '{}/list/{}/{}'\
                               .format(self._LINK, chr(letter), i)
                     page = BeautifulSoup(self._get_html_page(next_url), 'html5lib')
                     time.sleep(2)
         except:
-            pickle.dump(saved_links, open("{}/processed_links".format(folder_path), "wb"))
             print('\tSomething wrong happend processing {}'.format(url))
             print('\tRetrying again in 5 seconds...')
             time.sleep(5)
             self._saveLocally(folder_path)
 
     def _extract_topics_definitions_from(self, folder):
-        for file_name in os.listdir(folder):
+        files = os.listdir(folder)
+        for i, file_name in enumerate(files):
+            util.print_progress('Extracting def/nodef ', i + 1, len(files))
             try:
                 self._extract_from_file('{}/{}'.format(folder, file_name))
             except:
                 print("Failed to process " + file_name)
-
-    def _saved_links(self, folder_path):
-        try:
-            saved_links = pickle.load(open("{}/processed_links".format(folder_path), "rb"))
-        except (OSError, IOError):
-            saved_links = set()
-        return saved_links
 
     def _get_html_page(self, link):
         return urlopen(Request(link, headers={'User-Agent': 'Mozilla/5.0'})).read()
@@ -87,8 +84,11 @@ class DictionarySource(DataSource):
         span = page.find_all('span', {'class': 'word'})
         return [s.find('a')['href'] for s in span]
 
+    def _get_name_from(self, link):
+        return link.split('/')[-1]
+
     def _save_page(self, folder_path, link):
-        file_name = link.split('/')[-1]
+        file_name = self._get_name_from(link)
         page = self._get_html_page(link)
         file_path = '{}/{}'.format(folder_path, file_name)
         with open(file_path, 'wb') as f:
