@@ -27,7 +27,7 @@ class NoDefinitions():
             sentence = re.sub('[^\w,.\' /\\()-]', '', sentence).strip()
             if self._is_in_blacklist(sentence):
                 continue
-            if re.match('^[A-Z][^?!.]*[?.!]$', sentence):
+            if self._ends_with_punctuation(sentence):
                 nodef_ls.append(sentence)
         return nodef_ls
 
@@ -48,7 +48,8 @@ class NoDefinitions():
                 sentence = re.sub('[^\w,.\' /\\()-]', '', sentence).strip()
                 if sentence in set_defs:
                     continue
-                ls.append((sentence, topic))
+                if self._ends_with_punctuation(sentence):
+                    ls.append((sentence, topic))
         return ls
 
     def extract_anafora(self):
@@ -58,6 +59,9 @@ class NoDefinitions():
             if self._is_anafora(sentence):
                 ls.append(sentence)
         return ls
+
+    def _ends_with_punctuation(self, sentence):
+        return re.match('^[A-Z][^?!.]*[?.!]$', sentence)
 
     def _extract_text(self, article):
         ps = [p.get_text() for p in article.find_all('p') if not p.strong]

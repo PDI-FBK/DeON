@@ -37,6 +37,7 @@ class DiffBetweenDataSource(DataSource):
 
 
     def _extract_from(self, folder_path):
+        wcl_process = util.start_wcl_process()
         files = os.listdir(folder_path)
         for i, file_name in enumerate(files):
             util.print_progress('Extracting def/nodef ', i + 1, len(files))
@@ -49,7 +50,7 @@ class DiffBetweenDataSource(DataSource):
 
             no_definition = NoDefinitions(article, topics)
             self._save_nodefs(no_definition, file_name)
-            self._save_properties(no_definition, set(defs), file_name)
+            self._save_properties(wcl_process, no_definition, set(defs), file_name)
             self._save_anafora(no_definition, file_name)
 
     def _save_defs(self, article, topics, file_name):
@@ -66,14 +67,18 @@ class DiffBetweenDataSource(DataSource):
             util.save_output(file, _nodef, 0, file_name, '?', '?')
         return nodefs
 
-    def _save_properties(self, no_definition, defs, file_name):
+    def _save_properties(self, wcl_process, no_definition, defs, file_name):
         properties = no_definition.extract_no_def_properties(defs)
         file = os.path.join(self.dest, self._OUT_FILES[3])
         for p in properties:
             sentence = p[0]
             topic = p[1]
             pos = self._topic_position(topic, sentence.lower())
-            util.save_output(file, sentence, '?', file_name, topic, pos)
+            if pos:
+                _def = util.query_wcl_for(wcl_process, topic, sentence)
+                _def = 1 if _def else 0
+                util.save_output(file, sentence, _def, file_name, topic, pos)
+
         return properties
 
     def _save_anafora(self, no_definition, file_name):
@@ -83,18 +88,24 @@ class DiffBetweenDataSource(DataSource):
             util.save_output(file, anaf, '?', file_name, '?', '?')
 
     def _topic_position(self, topic, sentence):
+        # print(topic, sentence)
         topics = topic.split()
+        if len(topics) == 0:
+            return None
         words = sentence.split()
         indexes = []
         for i, word in enumerate(words):
             if word == topics[0]:
                 indexes.append(i)
+        index = -1
         for index in indexes:
             i = index
             for topic in topics:
                 if words[i] != topic:
                     break
             break
+        if index < 0:
+            return None
         return ','.join([str(x) for x in range(index, (index + len(topics)))])
 
     def _extract_topics_definitions_from(self, article, topics):
@@ -109,7 +120,8 @@ class DiffBetweenDataSource(DataSource):
 
                 if re.match(r"^((a)|(an) )?{} ((is)|(are)).+".format(topic), lower_def):
                     pos = self._topic_position(topic, lower_def)
-                    result.append((_def, topic, pos))
+                    if pos:
+                        result.append((_def, topic, pos))
                     break
         return result
 
