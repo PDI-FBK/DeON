@@ -9,11 +9,12 @@ class MsResearchSource(DataSource):
     _LINK = 'http://taln.upf.edu/web_old/system/files/resources_files/ms_research_defs-nodefs.txt'
     _OUT_FILE = 'msresearch.tsv'
 
-    def pull(self, dest):
+    def pull(self, dest, download):
         print('Pulling from msresearch dataset...')
         f_path = os.path.join(dest, 'msresearch.txt')
-        with open(f_path, 'wb') as f_out:
-            f_out.write(urllib.request.urlopen(self._LINK).read())
+        if download:
+            with open(f_path, 'wb') as f_out:
+                f_out.write(urllib.request.urlopen(self._LINK).read())
 
         source = open(f_path)
         f_out_path = os.path.join(dest, self._OUT_FILE)

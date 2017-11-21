@@ -13,13 +13,14 @@ class WCLDataSource(DataSource):
     _SOURCE_WIKI_GOOD = 'wcl_datasets_v1.2/wikipedia/wiki_good.txt'
     _SOURCE_WIKI_BAD = 'wcl_datasets_v1.2/wikipedia/wiki_bad.txt'
 
-    def pull(self, dest):
+    def pull(self, dest, download):
         print('Pulling from wcl dataset...')
-        f_path = os.path.join(dest, 'wcl.tar.gz')
-        with open(f_path, 'wb') as f_out:
-            f_out.write(urllib.request.urlopen(self._LINK).read())
-        with tarfile.open(f_path, 'r:gz') as targz:
-            targz.extractall(dest)
+        if download:
+            f_path = os.path.join(dest, 'wcl.tar.gz')
+            with open(f_path, 'wb') as f_out:
+                f_out.write(urllib.request.urlopen(self._LINK).read())
+            with tarfile.open(f_path, 'r:gz') as targz:
+                targz.extractall(dest)
 
         source_uwak = os.path.join(dest, self._SOURCE_UKWAC)
         source_good = os.path.join(dest, self._SOURCE_WIKI_GOOD)

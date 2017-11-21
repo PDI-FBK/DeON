@@ -23,7 +23,7 @@ class DataSource(object):
         return self.KEY
 
     @abc.abstractmethod
-    def pull(self, dest):
+    def pull(self, dest, download):
         """Pull the remote data and creates one (or more) TSV files locally.
 
         Arguments:

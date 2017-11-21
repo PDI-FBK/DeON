@@ -14,13 +14,14 @@ class W00DataSource(DataSource):
     _SOURCE_META = 'W00_dataset/annotated.meta'
     _OUT_FILE = 'w00.tsv'
 
-    def pull(self, dest):
+    def pull(self, dest, download):
         print('Pulling from w00 dataset...')
-        f_path = os.path.join(dest, 'w00.zip')
-        with open(f_path, 'wb') as f_out:
-            f_out.write(urllib.request.urlopen(self._LINK).read())
-        with zipfile.ZipFile(f_path) as zipf:
-            zipf.extractall(dest)
+        if download:
+            f_path = os.path.join(dest, 'w00.zip')
+            with open(f_path, 'wb') as f_out:
+                f_out.write(urllib.request.urlopen(self._LINK).read())
+            with zipfile.ZipFile(f_path) as zipf:
+                zipf.extractall(dest)
 
         source_word = os.path.join(dest, self._SOURCE_WORD)
         source_meta = os.path.join(dest, self._SOURCE_META)

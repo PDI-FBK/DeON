@@ -15,14 +15,15 @@ class DictionarySource(DataSource):
     _OUT_FILE = '{}.tsv'.format(KEY)
     f_out_path = ''
 
-    def pull(self, dest):
+    def pull(self, dest, download):
         print('Pulling for dictionary dataset...')
         self.f_out_path = os.path.join(dest, self._OUT_FILE)
         folder_path = '{}/{}'.format(dest, self._PAGE_FOLDER)
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
-        self._save_locally(folder_path)
+        if download:
+            self._save_locally(folder_path)
         self._extract_topics_definitions_from(folder_path)
         return self.f_out_path
 
