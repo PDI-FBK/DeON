@@ -73,7 +73,7 @@ class DiffBetweenDataSource(DataSource):
         for p in properties:
             sentence = p[0]
             topic = p[1]
-            pos = self._topic_position(topic, sentence.lower())
+            pos = util.topic_position(topic, sentence.lower())
             if pos:
                 _def = util.query_wcl_for(wcl_process, topic, sentence)
                 _def = 1 if _def else 0
@@ -87,27 +87,6 @@ class DiffBetweenDataSource(DataSource):
         for anaf in anaforas:
             util.save_output(file, anaf, '?', file_name, '?', '?')
 
-    def _topic_position(self, topic, sentence):
-        # print(topic, sentence)
-        topics = topic.split()
-        if len(topics) == 0:
-            return None
-        words = sentence.split()
-        indexes = []
-        for i, word in enumerate(words):
-            if word == topics[0]:
-                indexes.append(i)
-        index = -1
-        for index in indexes:
-            i = index
-            for topic in topics:
-                if words[i] != topic:
-                    break
-            break
-        if index < 0:
-            return None
-        return ','.join([str(x) for x in range(index, (index + len(topics)))])
-
     def _extract_topics_definitions_from(self, article, topics):
         result = []
         definitions = DifferenceBetween(article, topics).extractDefinitions()
@@ -119,7 +98,7 @@ class DiffBetweenDataSource(DataSource):
                 lower_def = _def.lower()
 
                 if re.match(r"^((a)|(an) )?{} ((is)|(are)).+".format(topic), lower_def):
-                    pos = self._topic_position(topic, lower_def)
+                    pos = util.topic_position(topic, lower_def)
                     if pos:
                         result.append((_def, topic, pos))
                     break

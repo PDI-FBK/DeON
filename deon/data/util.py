@@ -1,5 +1,6 @@
 import sys
 from subprocess import Popen, PIPE, DEVNULL
+import time
 
 
 def print_progress(msg, done, total='oo'):
@@ -24,5 +25,26 @@ def query_wcl_for(process, topic, sentence):
     process.stdin.flush()
     res = process.stdout.readline()
     res = res.decode("utf-8")
-    res = res.split('\t')[1].strip()
+    res = res.split('\t')[-1].strip()
     return res == 'true'
+
+
+def topic_position(topic, sentence):
+    topics = topic.split()
+    if len(topics) == 0:
+        return None
+    words = sentence.split()
+    indexes = []
+    for i, word in enumerate(words):
+        if word == topics[0]:
+            indexes.append(i)
+    index = -1
+    for index in indexes:
+        i = index
+        for topic in topics:
+            if words[i] != topic:
+                break
+        break
+    if index < 0:
+        return None
+    return ','.join([str(x) for x in range(index, (index + len(topics)))])

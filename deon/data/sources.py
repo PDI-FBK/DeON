@@ -4,6 +4,7 @@ from deon.data.msresearch.msresearch import MsResearchSource
 from deon.data.wcldata.wcldata import WCLDataSource
 from deon.data.diffbetween.difference_between import DiffBetweenDataSource
 from deon.data.dictionary.dictionary import DictionarySource
+from deon.data.wikipedia.wikipedia import WikipediaSource
 
 
 def resolve(key):
@@ -18,5 +19,7 @@ def resolve(key):
         return DiffBetweenDataSource()
     elif key == DictionarySource.KEY:
         return DictionarySource()
+    elif key == WikipediaSource.KEY:
+        return WikipediaSource()
 
     raise KeyError('Invalid key: `{}`'.format(key))
