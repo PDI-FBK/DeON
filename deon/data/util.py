@@ -1,11 +1,10 @@
 import sys
 from subprocess import Popen, PIPE, DEVNULL
-import time
 
 
-def print_progress(msg, done, total='oo'):
+def print_progress(msg, done, total='oo', extra_msg=''):
     sys.stdout.write('\r')
-    sys.stdout.write('\t{} {}/{}'.format(msg, done, total))
+    sys.stdout.write('\t{} {}/{} {}'.format(msg, done, total, extra_msg))
     sys.stdout.flush()
 
 

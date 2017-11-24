@@ -13,11 +13,15 @@ class DictionarySource(DataSource):
     _LINK = 'http://www.dictionary.com'
     _PAGE_FOLDER = 'dictionary'
     _OUT_FILE = '{}.tsv'.format(KEY)
+    _WCL_OUT_FILE = ['dictionary.wcl.def.tsv', 'dictionary.wcl.nodef.tsv']
     f_out_path = ''
 
     def pull(self, dest, download):
         print('Pulling for dictionary dataset...')
         self.f_out_path = os.path.join(dest, self._OUT_FILE)
+        self.wcl_process = util.start_wcl_process()
+        self.dest = dest
+
         folder_path = '{}/{}'.format(dest, self._PAGE_FOLDER)
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
@@ -61,12 +65,14 @@ class DictionarySource(DataSource):
 
     def _extract_topics_definitions_from(self, folder):
         files = os.listdir(folder)
+        count_failed = 0
         for i, file_name in enumerate(files):
-            util.print_progress('Extracting def/nodef ', i + 1, len(files))
             try:
                 self._extract_from_file('{}/{}'.format(folder, file_name))
             except:
-                print("Failed to process " + file_name)
+                count_failed += 1
+
+            util.print_progress('Extracting def/nodef ', i + 1, len(files), count_failed)
 
     def _get_html_page(self, link):
         return urlopen(Request(link, headers={'User-Agent': 'Mozilla/5.0'})).read()
@@ -101,11 +107,21 @@ class DictionarySource(DataSource):
         for dict_def in definitions:
             for topic, def_list in dict_def.items():
                 for _def in def_list:
-                    pos = ','.join(
-                      [str(x) for x in range(_def.find(topic), len(topic.split()))])
+                    pos = util.topic_position(topic.lower(), _def.lower())
+                    if not pos:
+                        continue
+                    self._ask_wcl_wrapper(_def, topic, pos, file_name)
                     self._save_definition_output(_def, topic, pos, file_name)
 
     def _save_definition_output(self, definition, topic, topic_pos, url):
-        with open('{}'.format(self.f_out_path), 'a') as f:
-            url = "{}/browse/{}".format(self._LINK, url)
-            f.write('{}\t{}\t{}\t{}\n'.format(definition, topic, topic_pos, url))
+        url = "{}/browse/{}".format(self._LINK, url)
+        util.save_output(self.f_out_path, definition, '1', url, topic, topic_pos)
+
+    def _ask_wcl_wrapper(self, definition, topic, topic_pos, url):
+        _def = util.query_wcl_for(self.wcl_process, topic.lower(), definition.lower())
+        if _def:
+            out_file = os.path.join(self.dest, self._WCL_OUT_FILE[0])
+            util.save_output(out_file, definition, '1', url, topic, topic_pos)
+        else:
+            out_file = os.path.join(self.dest, self._WCL_OUT_FILE[1])
+            util.save_output(out_file, definition, '1', url, topic, topic_pos)
