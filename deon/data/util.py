@@ -34,6 +34,8 @@ def query_wcl_for(process, topic, sentence):
 
 
 def topic_position(topic, sentence):
+    topic = topic.lower()
+    sentence = sentence.lower()
     topics = topic.split()
     if len(topics) == 0:
         return None
