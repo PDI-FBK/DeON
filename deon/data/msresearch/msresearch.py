@@ -7,7 +7,8 @@ import urllib.request
 class MsResearchSource(DataSource):
     KEY = 'msresearch'
     _LINK = 'http://taln.upf.edu/web_old/system/files/resources_files/ms_research_defs-nodefs.txt'
-    _OUT_FILE = 'msresearch.tsv'
+    _OUT_DEF_FILE = 'msresearch.def.tsv'
+    _OUT_NODEF_FILE = 'msresearch.nodef.tsv'
 
     def pull(self, dest, download):
         print('Pulling from msresearch dataset...')
@@ -17,22 +18,24 @@ class MsResearchSource(DataSource):
                 f_out.write(urllib.request.urlopen(self._LINK).read())
 
         source = open(f_path)
-        f_out_path = os.path.join(dest, self._OUT_FILE)
-        with open(f_out_path, 'w') as f_out:
-            for line in source:
-                line = line.strip()
-                if not line:
-                    continue
+        f_out_def_path = os.path.join(dest, self._OUT_DEF_FILE)
+        f_out_nodef_path = os.path.join(dest, self._OUT_NODEF_FILE)
+        for line in source:
+            line = line.strip()
+            if not line:
+                continue
 
-                is_def, phrase = line.split('/', 1)
-                def_flag = is_def == 'DEF'
-                _def = 1 if def_flag else 0
-                topic = '?'
-                pos = '?'
-                if _def:
-                    topic, pos = self._extract_topic_pos(phrase)
-
-                util.save_output(f_out_path, phrase, _def, self.KEY, topic, pos)
+            is_def, phrase = line.split('/', 1)
+            def_flag = is_def == 'DEF'
+            _def = 1 if def_flag else 0
+            f_out_path = f_out_nodef_path
+            topic = '?'
+            pos = '?'
+            if _def:
+                topic, pos = self._extract_topic_pos(phrase)
+                f_out_path = f_out_def_path
+            phrase = ' '.join(util.tokenize(phrase))
+            util.save_output(f_out_path, phrase, _def, self.KEY, topic, pos)
 
         print('\tDONE\n')
         return f_out_path
