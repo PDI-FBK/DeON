@@ -1,5 +1,5 @@
 from deon.data.datasource import DataSource
-from urllib.request import Request, urlopen
+from urllib.request import Request, urlopen, HTTPError, URLError
 from bs4 import BeautifulSoup
 import os
 import time
@@ -12,7 +12,7 @@ class DictionarySource(DataSource):
     KEY = 'dictionary'
     _LINK = 'http://www.dictionary.com'
     _PAGE_FOLDER = 'dictionary'
-    _OUT_FILE = '{}.tsv'.format(KEY)
+    _OUT_FILE = '{}.def.tsv'.format(KEY)
     _WCL_OUT_FILE = ['dictionary.wcl.def.tsv', 'dictionary.wcl.nodef.tsv']
     f_out_path = ''
 
@@ -31,12 +31,16 @@ class DictionarySource(DataSource):
         self._extract_topics_definitions_from(folder_path)
         return self.f_out_path
 
-    def _save_locally(self, folder_path):
+    def _save_locally(self, folder_path, start='a', end='z'):
         count = 0
+        _start = start
+        _end = end
         try:
             saved_links = set(os.listdir(folder_path))
             url = ''
-            for letter in range(ord('a'), ord('z') + 1):
+            current_letter = _start
+            for letter in range(ord(_start), ord(_end) + 1):
+                current_letter = letter
                 url = '{}/list/{}'.format(self._LINK, chr(letter))
                 page = BeautifulSoup(self._get_html_page(url), 'html5lib')
                 total_pages = self._get_last_number(page)
@@ -46,7 +50,8 @@ class DictionarySource(DataSource):
                     definition_urls = self._get_word_defs(page)
                     for link in definition_urls:
                         count += 1
-                        util.print_progress('Saving locally ({})'.format(len(saved_links)), count)
+                        util.print_progress('Saving locally ({})'
+                            .format(len(saved_links)), count)
 
                         if link in saved_links:
                             continue
@@ -57,11 +62,12 @@ class DictionarySource(DataSource):
                               .format(self._LINK, chr(letter), i)
                     page = BeautifulSoup(self._get_html_page(next_url), 'html5lib')
                     time.sleep(2)
-        except:
-            print('\tSomething wrong happend processing {}'.format(url))
+        except (HTTPError, URLError) as error:
+            print('\t{} {}'.format(error, url))
             print('\tRetrying again in 5 seconds...')
             time.sleep(5)
-            self._saveLocally(folder_path)
+            self._saveLocally(folder_path, current_letter)
+        return
 
     def _extract_topics_definitions_from(self, folder):
         files = os.listdir(folder)
@@ -73,12 +79,16 @@ class DictionarySource(DataSource):
                 count_failed += 1
 
             util.print_progress('Extracting def/nodef ', i + 1, len(files), count_failed)
+        return
 
     def _get_html_page(self, link):
         return urlopen(Request(link, headers={'User-Agent': 'Mozilla/5.0'})).read()
 
     def _get_last_number(self, page):
+        nr = 0
         pagination = page.find('div', {'class': 'pagination'})
+        if not pagination:
+            return nr
         last_href = pagination.find_all('a')[-1]
         if '>>' in last_href.get_text():
             next_page = self._get_html_page(last_href['href'])
@@ -88,8 +98,11 @@ class DictionarySource(DataSource):
         return nr
 
     def _get_word_defs(self, page):
-        span = page.find_all('span', {'class': 'word'})
-        return [s.find('a')['href'] for s in span]
+        try:
+            span = page.find_all('span', {'class': 'word'})
+            return [s.find('a')['href'] for s in span]
+        except:
+            return []
 
     def _get_name_from(self, link):
         return link.split('/')[-1]
@@ -124,4 +137,4 @@ class DictionarySource(DataSource):
             util.save_output(out_file, definition, '1', url, topic, topic_pos)
         else:
             out_file = os.path.join(self.dest, self._WCL_OUT_FILE[1])
-            util.save_output(out_file, definition, '1', url, topic, topic_pos)
+            util.save_output(out_file, definition, '0', url, topic, topic_pos)

@@ -47,12 +47,19 @@ class Dictionary():
 
         defcontents = def_content.findAll('div', {'class': 'def-content'})
         for content in defcontents:
+            # if content has <ol> do not consider it
+            if len(content.find_all('ol')) > 0:
+                continue
             content = ' '.join(content.get_text().split())
             content = content.split('. ')[0]
             content += '.' if not content[-1] == '.' else ''
             if len(content.split()) == 1:
                 continue
-            content = topic + ' is ' + content
+            if content.startswith('('):
+                domain, other = self._extract_domain(content)
+                content = 'In {}, {} is {}'.format(domain, topic, other)
+            else:
+                content = topic + ' is ' + content
             if re.search(r"\d+(.\d+)?\s[ba].?c[\s,]", content):
                 continue
             res.append(content)
@@ -64,12 +71,24 @@ class Dictionary():
                 return True
             return False
 
+    def _extract_domain(self, txt):
+        first = '('
+        last = ')'
+        start = txt.index(first) + len(first)
+        end = txt.index(last, start)
+        domain = txt[start:end]
+        ls = domain.split()
+        if ls[0].lower() == 'in':
+            domain = ' '.join(ls[1:])
+        return domain, txt[end + 1:]
+
     def _get_topic(self, box):
         header_topic = box.find('div', {'class': 'header-row'})
         if header_topic:
             header_topic = header_topic.get_text().split()
             header_topic = ' '.join(header_topic)
             header_topic = header_topic.split(' or ')[0]
+            header_topic = header_topic.split(',')[0]
             header_topic = header_topic.strip()
             header_topic = re.sub("\d+", "", header_topic)
             return header_topic
