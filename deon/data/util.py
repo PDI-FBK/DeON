@@ -1,5 +1,6 @@
 import sys
 from subprocess import Popen, PIPE, DEVNULL
+import nltk
 
 
 def print_progress(msg, done, total='oo', extra_msg=''):
@@ -11,6 +12,10 @@ def print_progress(msg, done, total='oo', extra_msg=''):
 def save_output(file, definition, _def, url, topic='?', topic_pos='?'):
     with open(file, 'a') as f:
         f.write('{}\t{}\t{}\t{}\t{}\n'.format(definition, topic, topic_pos, _def, url))
+
+
+def tokenize(sentence):
+    return nltk.word_tokenize(sentence)
 
 
 def start_wcl_process():
