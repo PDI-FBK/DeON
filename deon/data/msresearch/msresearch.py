@@ -38,7 +38,7 @@ class MsResearchSource(DataSource):
             util.save_output(f_out_path, phrase, _def, self.KEY, topic, pos)
 
         print('\tDONE\n')
-        return f_out_path
+        return
 
     def _extract_topic_pos(self, phrase):
         topic = phrase.split(' is ')[0].lower()

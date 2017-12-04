@@ -77,14 +77,8 @@ def build(source_keys=('w00',), dest='dataset', split=(80, 20), tmp=None, force=
     line_index = 0
     # do_split = len(split) > 1
     print(source_keys, '\n')
-    for f_path in [sources.resolve(key).pull(tmp, download) for key in source_keys]:
-        with open(dataset_file, 'a') as df:
-            with open(f_path, 'r') as f:
-                for line in f:
-                    line_index += 1
-                    line = '{}\t{}'.format(line_index, line)
+    [sources.resolve(key).pull(tmp, download) for key in source_keys]
 
-                    df.write(line)
 
     # shutil.move(dataset_file, dest)
 

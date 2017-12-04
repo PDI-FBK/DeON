@@ -12,13 +12,10 @@ class DictionarySource(DataSource):
     KEY = 'dictionary'
     _LINK = 'http://www.dictionary.com'
     _PAGE_FOLDER = 'dictionary'
-    _OUT_FILE = '{}.def.tsv'.format(KEY)
     _WCL_OUT_FILE = ['dictionary.wcl.def.tsv', 'dictionary.wcl.nodef.tsv']
-    f_out_path = ''
 
     def pull(self, dest, download):
         print('Pulling for dictionary dataset...')
-        self.f_out_path = os.path.join(dest, self._OUT_FILE)
         self.wcl_process = util.start_wcl_process()
         self.dest = dest
 
@@ -29,7 +26,7 @@ class DictionarySource(DataSource):
         if download:
             self._save_locally(folder_path)
         self._extract_topics_definitions_from(folder_path)
-        return self.f_out_path
+        return
 
     def _save_locally(self, folder_path, start='a', end='z'):
         count = 0
@@ -124,11 +121,6 @@ class DictionarySource(DataSource):
                     if not pos:
                         continue
                     self._ask_wcl_wrapper(_def, topic, pos, file_name)
-                    self._save_definition_output(_def, topic, pos, file_name)
-
-    def _save_definition_output(self, definition, topic, topic_pos, url):
-        url = "{}/browse/{}".format(self._LINK, url)
-        util.save_output(self.f_out_path, definition, '1', url, topic, topic_pos)
 
     def _ask_wcl_wrapper(self, definition, topic, topic_pos, url):
         _def = util.query_wcl_for(self.wcl_process, topic.lower(), definition.lower())

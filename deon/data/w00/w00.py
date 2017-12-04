@@ -43,4 +43,4 @@ class W00DataSource(DataSource):
                 util.save_output(f_out_nodef_path, line, def_flag, self.KEY)
 
         print('\tDONE\n')
-        return f_out_def_path
+        return

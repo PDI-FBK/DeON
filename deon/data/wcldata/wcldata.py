@@ -54,4 +54,4 @@ class WCLDataSource(DataSource):
                     util.save_output(f_out_nodef_path, phrase, is_def, self.KEY)
 
         print('\tDONE\n')
-        return f_out_def_path
+        return

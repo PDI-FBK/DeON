@@ -17,7 +17,6 @@ class WikipediaSource(DataSource):
         self.dest = dest
         wiki_folder = os.path.join(dest, self._INPUT_FOLDER)
         classifier = TxtClassifier()
-        f_out_path = os.path.join(dest, self._OUT_FILES[0])
 
         content_folders = os.listdir(wiki_folder)
         for i, folder in enumerate(content_folders):
@@ -28,7 +27,7 @@ class WikipediaSource(DataSource):
                 util.print_progress('Extracting def/nodef ', progress, len(content_folders))
                 file = os.path.join(content_folder_path, file_name)
                 self._parse(file, classifier)
-        return f_out_path
+        return
 
     def _parse(self, file, classifier):
         with open(file, 'r') as f:

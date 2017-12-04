@@ -33,7 +33,7 @@ class DiffBetweenDataSource(DataSource):
 
         self._extract_from(folder_path)
         print('\n\tDONE\n')
-        return self.f_out_path
+        return
 
 
 
