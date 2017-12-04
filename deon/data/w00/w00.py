@@ -35,7 +35,7 @@ class W00DataSource(DataSource):
             line = line.strip()
             if not line:
                 continue
-
+            line = ' '.join(util.tokenize(line))
             def_flag = 1 if meta.startswith('1') else 0
             if def_flag == 1:
                 util.save_output(f_out_def_path, line, def_flag, self.KEY)
