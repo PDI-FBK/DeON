@@ -8,6 +8,7 @@ import re
 from deon.data.diffbetween.definitions import DifferenceBetween
 from deon.data.diffbetween.no_definitions import NoDefinitions
 from deon.data.diffbetween.downloader import Downloader
+from deon.data.txt_classifier import TxtClassifier
 
 
 class DiffBetweenDataSource(DataSource):
@@ -37,58 +38,74 @@ class DiffBetweenDataSource(DataSource):
 
 
     def _extract_from(self, folder_path):
-        wcl_process = util.start_wcl_process()
+        # wcl_process = util.start_wcl_process()
+        classifier = TxtClassifier()
         files = os.listdir(folder_path)
         for i, file_name in enumerate(files):
             util.print_progress('Extracting def/nodef ', i + 1, len(files))
 
             file_path = '{}/{}'.format(folder_path, file_name)
             article = BeautifulSoup(open(file_path), "html.parser").find('article')
-            topics = self._extractTopics(article, file_name)
+            topics = self._extract_topics(article, file_name)
+            content = self._extract_text(article)
+            defs_set = self._extract_topics_definitions_from(article, topics)
+            nodef_set = set()
+            anafora_set = set()
 
-            defs = self._save_defs(article, topics, file_name)
+            for topic in topics:
+                classifier_result = classifier.classify(content, topic)
+                defs_set = defs_set.union(classifier_result['def'])
+                nodef_set = nodef_set.union(classifier_result['nodef'])
+                anafora_set = anafora_set.union(classifier_result['anafora'])
 
-            no_definition = NoDefinitions(article, topics)
-            self._save_nodefs(no_definition, file_name)
-            self._save_properties(wcl_process, no_definition, set(defs), file_name)
-            self._save_anafora(no_definition, file_name)
+            for sentence in defs_set:
+                pos = util.topic_position(topic, sentence)
+                self._save_def(sentence, file_name, topic, pos)
+            for sentence in nodef_set:
+                if sentence in defs_set:
+                    continue
+                if self.skip(sentence):
+                    continue
+                pos = util.topic_position(topic, sentence)
+                _topic = topic
+                if not pos:
+                    pos = '?'
+                    _topic = '?'
+                self._save_nodef(sentence, file_name, _topic, pos)
+            for sentence in anafora_set:
+                pos = util.topic_position(topic, sentence)
+                self._save_anafora(sentence, file_name)
 
-    def _save_defs(self, article, topics, file_name):
-        defs = self._extract_topics_definitions_from(article, topics)
-        file = os.path.join(self.dest, self._OUT_FILES[0])
-        for _def in defs:
-            util.save_output(file, _def[0], 1, file_name, _def[1], _def[2])
-        return defs
+    def _save_def(self, sentence, url, topic, pos):
+        out_file = os.path.join(self.dest, self._OUT_FILES[0])
+        util.save_output(out_file, sentence, '1', url, topic, pos)
 
-    def _save_nodefs(self, no_definition, file_name):
-        nodefs = no_definition.extract_no_def()
-        file = os.path.join(self.dest, self._OUT_FILES[1])
-        for _nodef in nodefs:
-            util.save_output(file, _nodef, 0, file_name, '?', '?')
-        return nodefs
+    def _save_nodef(self, sentence, url, topic='?', pos='?'):
+        out_file = os.path.join(self.dest, self._OUT_FILES[1])
+        util.save_output(out_file, sentence, '0', url, topic, pos)
 
-    def _save_properties(self, wcl_process, no_definition, defs, file_name):
-        properties = no_definition.extract_no_def_properties(defs)
-        file = os.path.join(self.dest, self._OUT_FILES[3])
-        for p in properties:
-            sentence = p[0]
-            topic = p[1]
-            pos = util.topic_position(topic, sentence.lower())
-            if pos:
-                _def = util.query_wcl_for(wcl_process, topic, sentence)
-                _def = 1 if _def else 0
-                util.save_output(file, sentence, _def, file_name, topic, pos)
+    def _save_anafora(self, sentence, url):
+        out_file = os.path.join(self.dest, self._OUT_FILES[2])
+        util.save_output(out_file, sentence, '0', url, '?', '?')
 
-        return properties
+    def skip(self, sentence):
+        return self._is_in_blacklist(sentence)
 
-    def _save_anafora(self, no_definition, file_name):
-        anaforas = no_definition.extract_anafora()
-        file = os.path.join(self.dest, self._OUT_FILES[2])
-        for anaf in anaforas:
-            util.save_output(file, anaf, '?', file_name, '?', '?')
+    def _is_in_blacklist(self, sentence):
+        blacklist = ('therefore', 'posted on', 'difference', 'help us', 'although',
+            'those', 'CC', 'facebook', 'however', 'accessed',
+            'structural formulae')
+        sentence = sentence.lower()
+        return sentence.startswith(blacklist)
+
+    def _extract_text(self, article):
+        ps = [p.get_text() for p in article.find_all('p') if not p.strong]
+        article_txt = ' '.join(ps)
+        article_txt = ' '.join(article_txt.split())
+        return article_txt
 
     def _extract_topics_definitions_from(self, article, topics):
-        result = []
+        result = set()
         definitions = DifferenceBetween(article, topics).extractDefinitions()
 
         for topic in topics:
@@ -98,14 +115,12 @@ class DiffBetweenDataSource(DataSource):
                 lower_def = _def.lower()
 
                 if re.match(r"^((a)|(an) )?{} ((is)|(are)).+".format(topic), lower_def):
-                    pos = util.topic_position(topic, lower_def)
-                    if pos:
-                        result.append((_def, topic, pos))
+                    result.add(_def)
                     break
         return result
 
-    def _extractTopics(self, article, file_name):
-        topics = []
+    def _extract_topics(self, article, file_name):
+        topics = set()
         h2s = article.find_all('h2')
         ps = article.find_all('p')
         tags = h2s + ps
@@ -126,11 +141,11 @@ class DiffBetweenDataSource(DataSource):
             if words[0] == 'a' or words[0] == 'an':
                 topic = ' '.join(words[1:])
 
-            topics.append(topic)
+            topics.add(topic)
 
         _topic = file_name.replace('difference-between-', '')
         _topic = _topic.split('-and-vs-')
         for _t in _topic:
-            topics.append(_t.replace('-', ' '))
+            topics.add(_t.replace('-', ' '))
 
         return topics
