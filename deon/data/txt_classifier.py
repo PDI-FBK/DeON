@@ -10,9 +10,7 @@ class TxtClassifier():
     def classify(self, txt, topic):
         result = {'def': set(), 'nodef': set(), 'anafora': set()}
 
-        if not topic[0].isalnum():
-            return result
-        if self._is_edge_case(topic[0]):
+        if not topic.isalnum():
             return result
 
         for sentence in sent_tokenize(txt):
