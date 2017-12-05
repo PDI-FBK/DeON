@@ -14,7 +14,8 @@ DEFAULT_SOURCES = [
     deon.data.sources.WCLDataSource.KEY,
     deon.data.sources.MsResearchSource.KEY,
     deon.data.sources.DiffBetweenDataSource.KEY,
-    deon.data.sources.DictionarySource.KEY
+    deon.data.sources.DictionarySource.KEY,
+    deon.data.sources.WikipediaSource.KEY
 ]
 
 # pylint: disable=C0301
