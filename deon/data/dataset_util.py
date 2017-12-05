@@ -3,42 +3,51 @@ import os
 
 def split_dataset(dataset_folder, split):
     split = list(split)
-    print('split dataset')
-    data = count_dataset(dataset_folder)
-    max_nr_of_senteces = max_nr_of_sentences(data)
-    nr_train, nr_test, nr_validation = get_total_by_percentage(max_nr_of_senteces, split)
-    ordered_files = zip_ordered_def_nodef_files(data, split)
+    data = count_dataset(dataset_folder, split)
+    _max_nr_of_sentences = max_nr_of_sentences(data)
+    nr_train, nr_test, nr_validation = get_total_by_percentage(_max_nr_of_sentences, split)
 
-    create_dataset(dataset_folder, ordered_files, nr_train, 0)
-    create_dataset(dataset_folder, ordered_files, nr_test, 1)
-    create_dataset(dataset_folder, ordered_files, nr_validation, 2)
+    create_dataset(dataset_folder, data, nr_train, 0)
+    create_dataset(dataset_folder, data, nr_test, 1)
+    create_dataset(dataset_folder, data, nr_validation, 2)
 
     return
 
 
-def create_dataset(dataset_folder, ordered_files, nr, pos):
-    print("-----------")
-    dest_path = os.path.join(dataset_folder, get_filename(pos))
-    print(dest_path)
-    count = 0
-    def_c = 0
-    nodef_c = 0
-    with open(dest_path, 'w') as f:
-        while count < nr:
-            for file_iter, counters in ordered_files:
-                if counters[pos] <= 0:
-                    continue
-                counters[pos] -= 1
-                sentence, _, _, _def, _ = next(file_iter).split('\t')
-                if _def == '1':
-                    def_c += 1
-                else:
-                    nodef_c += 1
-                # f.write('{} <EOS>\t{}\n'.format(sentence, _def))
-                count += 1
-                if count == nr:
-                    break
-    print(def_c, nodef_c)
+def create_dataset(folder, data, nr, pos):
+    nr_def = nr // 2
+    nr_nodef = nr_def
+    filepath = os.path.join(folder, get_filename(pos))
+    while nr_def > 0 or nr_nodef > 0:
+        for _, info in data.items():
+            if nr_def > 0 and info['def_split'][pos] > 0:
+                _def = next(info['def_iter'])
+                nr_def -= 1
+                info['def_split'][pos] -= 1
+                save_to(_def, filepath)
+
+            if nr_nodef > 0 and info['nodef_split'][pos] > 0:
+                _nodef = next(info['nodef_iter'])
+                nr_nodef -= 1
+                info['nodef_split'][pos] -= 1
+                save_to(_nodef, filepath)
+    return
+
+
+def save_to(line, filepath):
+    sentence, _, _, _def, _ = line.split('\t')
+    with open(filepath, 'a') as f:
+        f.write('{} <EOS>\t{}\n'.format(sentence, _def))
+
+
+def get_next(info, pos):
+    _def = None
+    _nodef = None
+    if info['def_split'][pos] > 0:
+        _def = next(info['def_iter'])
+    if info['nodef_split'][pos] > 0:
+        _def = next(info['nodef_iter'])
+    return _def, _nodef
 
 
 def get_filename(pos):
@@ -48,15 +57,6 @@ def get_filename(pos):
         return 'test.tsv'
     if pos == 2:
         return 'validation.tsv'
-
-
-def zip_ordered_def_nodef_files(data, split):
-    ordered_def_files = [(read_from(filepath), get_total_by_percentage(data['def'][filepath], split))
-                        for filepath in sort(data['def'])]
-    ordered_nodef_files = [(read_from(filepath), get_total_by_percentage(data['nodef'][filepath], split))
-                        for filepath in sort(data['nodef'])]
-    ordered_files = [item for sublist in zip(ordered_def_files, ordered_nodef_files) for item in sublist]
-    return ordered_files
 
 
 def get_total_by_percentage(nr, split):
@@ -81,33 +81,35 @@ def count_lines(filepath):
     return count
 
 
-def count_dataset(tmp):
-    result = {'def': {}, 'nodef': {}}
+def count_dataset(tmp, split):
+    result = {}
     for filename in os.listdir(tmp):
         if not filename.endswith('.tsv'):
             continue
         filepath = os.path.join(tmp, filename)
         names = filename.split('.')
-        if 'w00' in names or 'msresearch' in names:
-            if 'nodef' in names:
-                result['nodef'][filepath] = count_lines(filepath)
-            elif 'def' in names:
-                result['def'][filepath] = count_lines(filepath)
+        _count_lines = count_lines(filepath)
+        _split = get_total_by_percentage(_count_lines, split)
+        if names[0] not in result:
+            result[names[0]] = {}
+        if 'nodef' in names:
+            result[names[0]]['nodef_count'] = _count_lines
+            result[names[0]]['nodef_split'] = _split
+            result[names[0]]['nodef_iter'] = read_from(filepath)
+        elif 'def' in names:
+            result[names[0]]['def_count'] = _count_lines
+            result[names[0]]['def_split'] = _split
+            result[names[0]]['def_iter'] = read_from(filepath)
     return result
 
 
 def max_nr_of_sentences(data):
     def_sum = 0
     nodef_sum = 0
-    for vl in data['def'].values():
-        def_sum += vl
-    for vl in data['nodef'].values():
-        nodef_sum += vl
+    for _, value in data.items():
+        def_sum += value['def_count']
+        nodef_sum += value['nodef_count']
     return min(def_sum, nodef_sum)
-
-
-def sort(data):
-    return sorted(data, key=data.get)
 
 
 def read_from(filepath):
