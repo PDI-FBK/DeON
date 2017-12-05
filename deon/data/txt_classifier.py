@@ -9,6 +9,12 @@ class TxtClassifier():
 
     def classify(self, txt, topic):
         result = {'def': set(), 'nodef': set(), 'anafora': set()}
+
+        if not topic[0].isalnum():
+            return result
+        if self._is_edge_case(topic[0]):
+            return result
+
         for sentence in sent_tokenize(txt):
             classifier = self._classify(sentence, topic)
             if not classifier:
@@ -65,3 +71,6 @@ class TxtClassifier():
 
     def _is_fully_related_with_topic(self, sentence, topic):
         return topic in sentence
+
+    def _is_edge_case(self, ch):
+        return ch == '?'

@@ -48,6 +48,7 @@ class DiffBetweenDataSource(DataSource):
             article = BeautifulSoup(open(file_path), "html.parser").find('article')
             topics = self._extract_topics(article, file_name)
             content = self._extract_text(article)
+
             defs_set = self._extract_topics_definitions_from(article, topics)
             nodef_set = set()
             anafora_set = set()
@@ -60,7 +61,11 @@ class DiffBetweenDataSource(DataSource):
 
             for sentence in defs_set:
                 pos = util.topic_position(topic, sentence)
-                self._save_def(sentence, file_name, topic, pos)
+                _topic = topic
+                if not pos:
+                    pos = '?'
+                    _topic = '?'
+                self._save_def(sentence, file_name, _topic, pos)
             for sentence in nodef_set:
                 if sentence in defs_set:
                     continue
@@ -115,7 +120,7 @@ class DiffBetweenDataSource(DataSource):
                 lower_def = _def.lower()
 
                 if re.match(r"^((a)|(an) )?{} ((is)|(are)).+".format(topic), lower_def):
-                    result.add(_def)
+                    result.add(' '.join(util.tokenize(_def)))
                     break
         return result
 

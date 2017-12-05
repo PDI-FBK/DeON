@@ -73,15 +73,6 @@ def build(source_keys=('w00',), dest='dataset', split=(80, 20), tmp=None, force=
     print("Build the DeON dataset from differnt data sources.")
     dest = _dest_dir(dest, force)
     tmp = _tmp_dir(tmp, force)
-    dataset_file = tmp + '/dataset.tsv'
-    line_index = 0
-    # do_split = len(split) > 1
     print(source_keys, '\n')
     [sources.resolve(key).pull(tmp, download) for key in source_keys]
-
-
-    # shutil.move(dataset_file, dest)
-
-    # tmp directory cleanup
-    # shutil.rmtree(tmp)
     print('Done!')
