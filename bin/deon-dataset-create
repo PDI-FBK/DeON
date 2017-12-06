@@ -7,7 +7,7 @@ import copy
 import random
 
 import deon.data.sources
-import deon.data.dataset
+import deon.dataset
 
 DEFAULT_SOURCES = [
     deon.data.sources.W00DataSource.KEY,
@@ -27,6 +27,7 @@ PARSER.add_argument('--force', action='store_true', help='If set, an existing di
 PARSER.add_argument('--tmp', type=str, default=None, help='Temporary directory path. If specified and not empty, use the --force flag. It will be cleaned up at the end of the dataset creation process.')
 PARSER.add_argument('--seed', type=int, default=23, help='Random seed.')
 PARSER.add_argument('--download', action='store_true', help='If you want to force downloading the source files')
+PARSER.add_argument('--clean', action='store_true', help='If you want remove all generated *.tsv, *.rio and vocabolary. This does NOT remove the downloaded dataset.')
 ARGS = PARSER.parse_args()
 # pylint: enable=C0301
 
@@ -37,13 +38,14 @@ def main():
     random.seed(ARGS.seed)
     sources = ARGS.sources if ARGS.sources else copy.copy(DEFAULT_SOURCES)
     split = tuple([int(item) for item in ARGS.split.split(',')])
-    deon.data.dataset.build(
+    deon.dataset.build(
         source_keys=sources,
         dest=ARGS.dest,
         split=split,
         tmp=ARGS.tmp,
         force=ARGS.force,
-        download=ARGS.download)
+        download=ARGS.download,
+        clean=ARGS.clean)
 
 
 if __name__ == '__main__':

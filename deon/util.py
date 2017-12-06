@@ -1,6 +1,7 @@
 import sys
 from subprocess import Popen, PIPE, DEVNULL
 import nltk
+import os
 
 
 def print_progress(msg, done, total='oo', extra_msg=''):
@@ -60,3 +61,16 @@ def read_from(file):
     with open(file, 'r') as f:
         for line in f:
             yield line
+
+
+def tsv_already_exist(dest, files):
+    f_exists = False
+    for file_name in files:
+        file_path = os.path.join(dest, file_name)
+        f_exists = f_exists and os.path.isfile(file_path)
+    if not f_exists:
+        for file_name in files:
+            file_path = os.path.join(dest, file_name)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+    return f_exists

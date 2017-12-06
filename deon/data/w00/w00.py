@@ -1,5 +1,5 @@
 from deon.data.datasource import DataSource
-import deon.data.util as util
+import deon.util as util
 import os
 import urllib.request
 import zipfile
@@ -23,6 +23,9 @@ class W00DataSource(DataSource):
                 f_out.write(urllib.request.urlopen(self._LINK).read())
             with zipfile.ZipFile(f_path) as zipf:
                 zipf.extractall(dest)
+
+        if util.tsv_already_exist(dest, [self._OUT_DEF_FILE, self._OUT_NODEF_FILE]):
+            return
 
         source_word = os.path.join(dest, self._SOURCE_WORD)
         source_meta = os.path.join(dest, self._SOURCE_META)

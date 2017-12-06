@@ -2,7 +2,7 @@ from deon.data.datasource import DataSource
 from deon.data.txt_classifier import TxtClassifier
 import os
 import json
-import deon.data.util as util
+import deon.util as util
 
 
 class WikipediaSource(DataSource):
@@ -14,6 +14,10 @@ class WikipediaSource(DataSource):
 
     def pull(self, dest, download):
         print('Pulling from wikipedia dataset...\n')
+
+        if util.tsv_already_exist(dest, self._OUT_FILES):
+            return
+
         self.dest = dest
         wiki_folder = os.path.join(dest, self._INPUT_FOLDER)
         classifier = TxtClassifier()

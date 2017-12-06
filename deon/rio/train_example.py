@@ -1,7 +1,6 @@
 import tensorflow as tf
-import os
 from pathlib import Path
-import deon.data.util as util
+import deon.util as util
 
 
 class TrainExample():

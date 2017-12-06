@@ -31,12 +31,24 @@ def _dest_dir(dest, force):
     return dest
 
 
-def build(source_keys=('w00',), dest='dataset', split=(70, 20, 10), tmp=None, force=False, download=False):
+def _clean(tmp):
+    for filename in os.listdir(tmp):
+        if filename.endswith('.tsv')\
+            or filename.endswith('.rio')\
+            or filename.endswith('.idx'):
+            os.remove(os.path.join(tmp, filename))
+
+
+def build(source_keys=('w00',), dest='dataset', split=(70, 20, 10), tmp=None, force=False, download=False, clean=False):
     """Build the DeON dataset from differnt data sources."""
-    # print("Build the DeON dataset from differnt data sources.")
-    # dest = _dest_dir(dest, force)
-    # tmp = _tmp_dir(tmp, force)
-    # [sources.resolve(key).pull(tmp, download) for key in source_keys]
+    print("Build the DeON dataset from differnt data sources.")
+    dest = _dest_dir(dest, force)
+    tmp = _tmp_dir(tmp, force)
+
+    if clean:
+        _clean(tmp)
+
+    [sources.resolve(key).pull(tmp, download) for key in source_keys]
     print('Splitting dataset', split, '...')
     dataset_util.split_dataset(tmp, split)
     print('Done!')

@@ -1,5 +1,5 @@
 from deon.rio.vocabolary import Vocabolary
-import deon.data.util as util
+import deon.util as util
 from pathlib import Path
 import os
 

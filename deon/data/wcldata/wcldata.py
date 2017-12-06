@@ -1,5 +1,5 @@
 from deon.data.datasource import DataSource
-import deon.data.util as util
+import deon.util as util
 import os
 import urllib.request
 import tarfile
@@ -22,6 +22,9 @@ class WCLDataSource(DataSource):
                 f_out.write(urllib.request.urlopen(self._LINK).read())
             with tarfile.open(f_path, 'r:gz') as targz:
                 targz.extractall(dest)
+
+        if util.tsv_already_exist(dest, [self._OUT_DEF_FILE, self._OUT_NODEF_FILE]):
+            return
 
         source_uwak = os.path.join(dest, self._SOURCE_UKWAC)
         source_good = os.path.join(dest, self._SOURCE_WIKI_GOOD)

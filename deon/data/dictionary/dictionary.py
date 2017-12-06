@@ -3,7 +3,7 @@ from urllib.request import Request, urlopen, HTTPError, URLError
 from bs4 import BeautifulSoup
 import os
 import time
-import deon.data.util as util
+import deon.util as util
 
 from deon.data.dictionary.dictionary_definition import Dictionary
 
@@ -25,6 +25,10 @@ class DictionarySource(DataSource):
 
         if download:
             self._save_locally(folder_path)
+
+        if util.tsv_already_exist(dest, self._WCL_OUT_FILE):
+            return
+
         self._extract_topics_definitions_from(folder_path)
         return
 

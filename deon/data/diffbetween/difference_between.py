@@ -1,6 +1,6 @@
 from deon.data.datasource import DataSource
 from bs4 import BeautifulSoup
-import deon.data.util as util
+import deon.util as util
 
 import os
 import re
@@ -16,7 +16,7 @@ class DiffBetweenDataSource(DataSource):
 
     KEY = 'diffbetween'
     _PAGE_FOLDER = 'diffbetween'
-    _OUT_FILES = ['diffbetween.def.tsv', 'diffbetween.nodef.tsv', 'diffbetween.anafora.tsv', 'diffbetween.wcl.tsv']
+    _OUT_FILES = ['diffbetween.def.tsv', 'diffbetween.nodef.tsv', 'diffbetween.anafora.tsv']
 
     def pull(self, dest, download):
         print('Pulling from diffbetween dataset...')
@@ -30,6 +30,9 @@ class DiffBetweenDataSource(DataSource):
             downloader = Downloader(folder_path)
             downloader.save_locally()
             print('\n')
+
+        if util.tsv_already_exist(dest, self._OUT_FILES):
+            return
 
         self._extract_from(folder_path)
         print('\n\tDONE\n')

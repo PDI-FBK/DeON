@@ -1,5 +1,5 @@
 from deon.data.datasource import DataSource
-import deon.data.util as util
+import deon.util as util
 import os
 import urllib.request
 
@@ -16,6 +16,9 @@ class MsResearchSource(DataSource):
         if download:
             with open(f_path, 'wb') as f_out:
                 f_out.write(urllib.request.urlopen(self._LINK).read())
+
+        if util.tsv_already_exist(dest, [self._OUT_DEF_FILE, self._OUT_NODEF_FILE]):
+            return
 
         source = open(f_path)
         f_out_def_path = os.path.join(dest, self._OUT_DEF_FILE)

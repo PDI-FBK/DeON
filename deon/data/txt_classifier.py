@@ -1,5 +1,5 @@
 from nltk.tokenize import sent_tokenize
-import deon.data.util as util
+import deon.util as util
 
 
 class TxtClassifier():

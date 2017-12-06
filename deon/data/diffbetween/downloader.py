@@ -1,6 +1,6 @@
 import os
 from bs4 import BeautifulSoup
-import deon.data.util as util
+import deon.util as util
 import time
 from urllib.request import Request, urlopen
 
