@@ -1,4 +1,6 @@
 import os
+from deon.rio.vocabolary_handler import VocabolaryHandler
+from deon.rio.train_example import *
 
 
 def split_dataset(dataset_folder, split):
@@ -7,11 +9,18 @@ def split_dataset(dataset_folder, split):
     _max_nr_of_sentences = max_nr_of_sentences(data)
     nr_train, nr_test, nr_validation = get_total_by_percentage(_max_nr_of_sentences, split)
 
-    create_dataset(dataset_folder, data, nr_train, 0)
-    create_dataset(dataset_folder, data, nr_test, 1)
-    create_dataset(dataset_folder, data, nr_validation, 2)
+    train_file_path = create_dataset(dataset_folder, data, nr_train, 0)
+    test_file_path = create_dataset(dataset_folder, data, nr_test, 1)
+    validation_file_path = create_dataset(dataset_folder, data, nr_validation, 2)
+
+    save_rio([train_file_path, test_file_path, validation_file_path], dataset_folder)
 
     return
+
+
+def save_rio(path_list, dataset_folder):
+    vocabolary = VocabolaryHandler(path_list, dataset_folder).get_vocabolary()
+    generate_rio_dataset(path_list, vocabolary)
 
 
 def create_dataset(folder, data, nr, pos):
@@ -31,7 +40,7 @@ def create_dataset(folder, data, nr, pos):
                 nr_nodef -= 1
                 info['nodef_split'][pos] -= 1
                 save_to(_nodef, filepath)
-    return
+    return filepath
 
 
 def save_to(line, filepath):
@@ -90,6 +99,10 @@ def count_dataset(tmp, split):
         names = filename.split('.')
         _count_lines = count_lines(filepath)
         _split = get_total_by_percentage(_count_lines, split)
+
+        if 'def' not in names and 'nodef' not in names:
+            continue
+
         if names[0] not in result:
             result[names[0]] = {}
         if 'nodef' in names:

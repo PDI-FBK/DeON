@@ -54,3 +54,9 @@ def topic_position(topic, sentence):
     if index < 0:
         return None
     return ','.join([str(x) for x in range(index, (index + len(topics)))])
+
+
+def read_from(file):
+    with open(file, 'r') as f:
+        for line in f:
+            yield line
