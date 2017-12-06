@@ -7,6 +7,7 @@ import tempfile
 import deon.data.sources as sources
 import deon.data.dataset_util as dataset_util
 
+
 def _tmp_dir(tmp, force):
     if not tmp:
         return tempfile.mkdtemp()
@@ -39,6 +40,15 @@ def _clean(tmp):
             os.remove(os.path.join(tmp, filename))
 
 
+def _move_to_dataset(dest, tmp):
+    for filename in os.listdir(tmp):
+        if filename.startswith(('test', 'train', 'validation', 'vocabolary')):
+            frompath = os.path.join(tmp, filename)
+            topath = os.path.join(dest, filename)
+            shutil.move(frompath, topath)
+    pass
+
+
 def build(source_keys=('w00',), dest='dataset', split=(70, 20, 10), tmp=None, force=False, download=False, clean=False):
     """Build the DeON dataset from differnt data sources."""
     print("Build the DeON dataset from differnt data sources.")
@@ -51,4 +61,5 @@ def build(source_keys=('w00',), dest='dataset', split=(70, 20, 10), tmp=None, fo
     [sources.resolve(key).pull(tmp, download) for key in source_keys]
     print('Splitting dataset', split, '...')
     dataset_util.split_dataset(tmp, split)
+    _move_to_dataset(dest, tmp)
     print('Done!')
