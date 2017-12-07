@@ -7,20 +7,27 @@ import copy
 import random
 
 import deon.data.sources
-import deon.data.dataset
+import deon.dataset
 
 DEFAULT_SOURCES = [
-    deon.data.sources.W00DataSource.KEY
+    deon.data.sources.W00DataSource.KEY,
+    deon.data.sources.WCLDataSource.KEY,
+    deon.data.sources.MsResearchSource.KEY,
+    deon.data.sources.DiffBetweenDataSource.KEY,
+    deon.data.sources.DictionarySource.KEY,
+    deon.data.sources.WikipediaSource.KEY
 ]
 
 # pylint: disable=C0301
 PARSER = argparse.ArgumentParser(prog=__file__)
 PARSER.add_argument('--sources', type=str, nargs='*', help='The keys of the data sources to be fetched and used in the dataset creation. If not set, all the available datasources will be used, namely: {}.'.format(', '.join(DEFAULT_SOURCES)))
 PARSER.add_argument('--dest', type=str, default='dataset', help='The dataset destination directory.')
-PARSER.add_argument('--split', type=str, default='80,20', help='Split portions. A comma separated list of integer numbers summing up to 100 deciding which fraction of the data will be used for training/validation/testing. You can split into three or two.')
+PARSER.add_argument('--split', type=str, default='70,20,10', help='Split portions. A comma separated list of integer numbers summing up to 100 deciding which fraction of the data will be used for training/validation/testing. You can split into three or two.')
 PARSER.add_argument('--force', action='store_true', help='If set, an existing directory with the same path as --dest exists will be overwritten.')
 PARSER.add_argument('--tmp', type=str, default=None, help='Temporary directory path. If specified and not empty, use the --force flag. It will be cleaned up at the end of the dataset creation process.')
 PARSER.add_argument('--seed', type=int, default=23, help='Random seed.')
+PARSER.add_argument('--download', action='store_true', help='If you want to force downloading the source files')
+PARSER.add_argument('--clean', action='store_true', help='If you want remove all generated *.tsv, *.rio and vocabolary. This does NOT remove the downloaded dataset.')
 ARGS = PARSER.parse_args()
 # pylint: enable=C0301
 
@@ -31,13 +38,15 @@ def main():
     random.seed(ARGS.seed)
     sources = ARGS.sources if ARGS.sources else copy.copy(DEFAULT_SOURCES)
     split = tuple([int(item) for item in ARGS.split.split(',')])
-    deon.data.dataset.build(
+    deon.dataset.build(
         source_keys=sources,
         dest=ARGS.dest,
         split=split,
         tmp=ARGS.tmp,
-        force=ARGS.force)
+        force=ARGS.force,
+        download=ARGS.download,
+        clean=ARGS.clean)
 
-    
+
 if __name__ == '__main__':
     main()
