@@ -6,7 +6,6 @@ import os
 import re
 
 from deon.data.diffbetween.definitions import DifferenceBetween
-from deon.data.diffbetween.no_definitions import NoDefinitions
 from deon.data.diffbetween.downloader import Downloader
 from deon.data.txt_classifier import TxtClassifier
 
