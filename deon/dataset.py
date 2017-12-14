@@ -5,7 +5,7 @@ import shutil
 import tempfile
 
 import deon.data.sources as sources
-import deon.data.splitter as splitter
+from deon.data.splitter import Splitter
 
 
 def _tmp_dir(tmp, force):
@@ -60,6 +60,6 @@ def build(source_keys=('w00',), dest='dataset', split=(70, 20, 10), tmp=None, fo
 
     [sources.resolve(key).pull(tmp, download) for key in source_keys]
     print('Splitting dataset', split, '...')
-    splitter.split_dataset(tmp, split)
+    Splitter().split_dataset(tmp, split)
     _move_to_dataset(dest, tmp)
     print('Done!')
