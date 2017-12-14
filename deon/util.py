@@ -64,7 +64,7 @@ def read_from(file):
 
 
 def tsv_already_exist(dest, files):
-    f_exists = False
+    f_exists = True
     for file_name in files:
         file_path = os.path.join(dest, file_name)
         f_exists = f_exists and os.path.isfile(file_path)
