@@ -3,8 +3,3 @@
 **/__pycache__
 **/.vscode
 *.*~
-dataset
-build
-dist
-deon.egg-info
-tmp_dataset

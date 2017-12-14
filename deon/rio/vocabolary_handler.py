@@ -2,7 +2,6 @@ from deon.rio.vocabolary import Vocabolary
 import deon.util as util
 from pathlib import Path
 import os
-from deon.progressbar import Progressbar
 
 
 class VocabolaryHandler():
@@ -10,7 +9,6 @@ class VocabolaryHandler():
     def __init__(self, path_list, dest):
         self.path_list = path_list
         self.dest = dest
-        self.progressbar = Progressbar()
 
     def get_vocabolary(self):
         if self._vocabolary_path().exists():
@@ -21,7 +19,6 @@ class VocabolaryHandler():
         vocab_path = self._vocabolary_path()
         vocabolary = Vocabolary()
         for word in util.read_from(vocab_path):
-            self.progressbar.update()
             word = word.replace('\n', '')
             if word:
                 vocabolary.add(word)
@@ -33,7 +30,6 @@ class VocabolaryHandler():
         vocabolary.add('<EOS>')
         for f_input_path in f_inputs:
             for line in util.read_from(f_input_path):
-                self.progressbar.update()
                 sentence, _ = line.split('\t')
                 _ = [vocabolary.add(word) for word in sentence.split()]
         with open(vocab_path, 'w') as f:
@@ -44,3 +40,4 @@ class VocabolaryHandler():
     def _vocabolary_path(self):
         vocab_path = os.path.join(self.dest, 'vocabolary.idx')
         return Path(vocab_path)
+
