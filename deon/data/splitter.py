@@ -2,34 +2,49 @@ import os
 from deon.rio.vocabolary_handler import VocabolaryHandler
 from deon.rio.train_example import *
 from deon.progressbar import Progressbar
+import deon.util as util
+
 
 class Splitter():
 
-    def __init__(self):
+    def __init__(self, dataset_folder, split):
         self.progressbar = Progressbar()
+        self.dataset_folder = dataset_folder
+        self.split = split
 
-    def split_dataset(self, dataset_folder, split):
-        split = list(split)
-        data = self.count_dataset(dataset_folder, split)
-        _max_nr_of_sentences = self.max_nr_of_sentences(data)
-        nr_train, nr_test, nr_validation = self.get_total_by_percentage(_max_nr_of_sentences, split)
+    def split_dataset(self, balanced=False):
+        split = list(self.split)
+        data_sizes = self.count_dataset(split)
+        if balanced:
+            return self._split_balanced(data_sizes)
+        return self._split_normal(data_sizes)
 
-        train_file_path = self.create_dataset(dataset_folder, data, nr_train, 0)
-        test_file_path = self.create_dataset(dataset_folder, data, nr_test, 1)
-        validation_file_path = self.create_dataset(dataset_folder, data, nr_validation, 2)
+    def _split_normal(self, data_sizes):
+        # TODO
+        pass
 
-        self.save_rio([train_file_path, test_file_path, validation_file_path], dataset_folder)
+    def _split_balanced(self, data_sizes):
+        _max_nr_of_sentences = self.max_nr_of_sentences(data_sizes)
+        nr_train, nr_test, nr_validation = self.get_total_by_percentage(
+            _max_nr_of_sentences, self.split)
 
+        train_file_path = self.create_dataset(data_sizes, nr_train, 0)
+        test_file_path = self.create_dataset(data_sizes, nr_test, 1)
+        validation_file_path = self.create_dataset(data_sizes, nr_validation, 2)
+
+        self.save_rio(
+            [train_file_path, test_file_path, validation_file_path])
         return
 
-    def save_rio(self, path_list, dataset_folder):
-        vocabolary = VocabolaryHandler(path_list, dataset_folder).get_vocabolary()
+    def save_rio(self, path_list):
+        vocabolary = VocabolaryHandler(path_list, self.dataset_folder)\
+                    .get_vocabolary()
         generate_rio_dataset(path_list, vocabolary)
 
-    def create_dataset(self, folder, data, nr, pos):
+    def create_dataset(self, data, nr, pos):
         nr_def = nr // 2
         nr_nodef = nr_def
-        filepath = os.path.join(folder, self.get_filename(pos))
+        filepath = os.path.join(self.dataset_folder, self.get_filename(pos))
         while nr_def > 0 or nr_nodef > 0:
             for _, info in data.items():
                 self.progressbar.update()
@@ -79,12 +94,12 @@ class Splitter():
                 count += 1
         return count
 
-    def count_dataset(self, tmp, split):
+    def count_dataset(self, split):
         result = {}
-        for filename in os.listdir(tmp):
+        for filename in os.listdir(self.dataset_folder):
             if not filename.endswith('.tsv'):
                 continue
-            filepath = os.path.join(tmp, filename)
+            filepath = os.path.join(self.dataset_folder, filename)
             names = filename.split('.')
             _count_lines = self.count_lines(filepath)
             _split = self.get_total_by_percentage(_count_lines, split)
