@@ -20,17 +20,31 @@ class Splitter():
         return self._split_normal(data_sizes)
 
     def _split_normal(self, data_sizes):
-        # TODO
+        total_def, total_nodef = self._total_def_nodef_sentences(data_sizes)
+        nr_train_def, nr_test_def, nr_validation_def = \
+            self.get_total_by_percentage(total_def, self.split)
+        nr_train_nodef, nr_test_nodef, nr_validation_nodef = \
+            self.get_total_by_percentage(total_nodef, self.split)
+        train_file_path = self.create_dataset(
+            data_sizes, nr_train_def, nr_train_nodef, 0)
+        test_file_path = self.create_dataset(
+            data_sizes, nr_test_def, nr_test_nodef, 1)
+        validation_file_path = self.create_dataset(
+            data_sizes, nr_validation_def, nr_validation_nodef, 2)
+        self.save_rio(
+            [train_file_path, test_file_path, validation_file_path])
         pass
 
     def _split_balanced(self, data_sizes):
         _max_nr_of_sentences = self.max_nr_of_sentences(data_sizes)
         nr_train, nr_test, nr_validation = self.get_total_by_percentage(
             _max_nr_of_sentences, self.split)
-
-        train_file_path = self.create_dataset(data_sizes, nr_train, 0)
-        test_file_path = self.create_dataset(data_sizes, nr_test, 1)
-        validation_file_path = self.create_dataset(data_sizes, nr_validation, 2)
+        train_file_path = self.create_dataset(
+            data_sizes, nr_train // 2, nr_train // 2, 0)
+        test_file_path = self.create_dataset(
+            data_sizes, nr_test // 2, nr_test // 2, 1)
+        validation_file_path = self.create_dataset(
+            data_sizes, nr_validation // 2, nr_validation // 2, 2)
 
         self.save_rio(
             [train_file_path, test_file_path, validation_file_path])
@@ -41,9 +55,7 @@ class Splitter():
                     .get_vocabolary()
         generate_rio_dataset(path_list, vocabolary)
 
-    def create_dataset(self, data, nr, pos):
-        nr_def = nr // 2
-        nr_nodef = nr_def
+    def create_dataset(self, data, nr_def, nr_nodef, pos):
         filepath = os.path.join(self.dataset_folder, self.get_filename(pos))
         while nr_def > 0 or nr_nodef > 0:
             for _, info in data.items():
@@ -120,12 +132,16 @@ class Splitter():
         return result
 
     def max_nr_of_sentences(self, data):
+        def_sum, nodef_sum = self._total_def_nodef_sentences(data)
+        return min(def_sum, nodef_sum)
+
+    def _total_def_nodef_sentences(self, data):
         def_sum = 0
         nodef_sum = 0
         for _, value in data.items():
             def_sum += value['def_count']
             nodef_sum += value['nodef_count']
-        return min(def_sum, nodef_sum)
+        return def_sum, nodef_sum
 
     def read_from(self, filepath):
         with open(filepath, 'r') as f:

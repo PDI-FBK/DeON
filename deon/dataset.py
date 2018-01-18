@@ -48,8 +48,8 @@ def _move_to_dataset(dest, tmp):
             shutil.move(frompath, topath)
     pass
 
-def build(source_keys=('w00',),
-    dest='dataset', split=(70, 20, 10), tmp=None, force=False, download=False, clean=False, balanced_split=False):
+
+def build(source_keys=('w00',), dest='dataset', split=(70, 20, 10), tmp=None, force=False, download=False, clean=False, balanced_split=False):
     """Build the DeON dataset from differnt data sources."""
     print("Build the DeON dataset from differnt data sources.")
     dest = _dest_dir(dest, force)
