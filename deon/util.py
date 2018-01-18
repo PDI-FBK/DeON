@@ -2,6 +2,7 @@ import sys
 from subprocess import Popen, PIPE, DEVNULL
 import nltk
 import os
+import subprocess
 
 
 def print_progress(msg, done, total='oo', extra_msg=''):
@@ -68,9 +69,20 @@ def tsv_already_exist(dest, files):
     for file_name in files:
         file_path = os.path.join(dest, file_name)
         f_exists = f_exists and os.path.isfile(file_path)
+        print(file_path, f_exists)
     if not f_exists:
         for file_name in files:
             file_path = os.path.join(dest, file_name)
             if os.path.isfile(file_path):
                 os.remove(file_path)
     return f_exists
+
+
+def clean_duplicates(filepath, destpath):
+    print(filepath)
+    destfilepath = filepath + '.uniq'
+    subprocess.call('wc -l {}'.format(filepath), shell=True)
+    subprocess.call("sort -t$'\t' -u -k1,1 {} > {}".format(filepath, destfilepath), shell=True)
+    subprocess.call('rm {}'.format(filepath), shell=True)
+    subprocess.call('mv {} {}'.format(destfilepath, filepath), shell=True)
+    subprocess.call('wc -l {}'.format(filepath), shell=True)
