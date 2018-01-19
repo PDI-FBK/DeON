@@ -12,6 +12,9 @@ def print_progress(msg, done, total='oo', extra_msg=''):
 
 
 def save_output(file, definition, _def, url, topic='?', topic_pos='?'):
+    len_words = len(definition.split())
+    if len_words <= 2 or len_words > 300:
+        return
     with open(file, 'a') as f:
         f.write('{}\t{}\t{}\t{}\t{}\n'.format(definition, topic, topic_pos, _def, url))
 
