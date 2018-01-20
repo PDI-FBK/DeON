@@ -1,14 +1,12 @@
 import os
 from deon.rio.vocabolary_handler import VocabolaryHandler
 from deon.rio.train_example import *
-from deon.progressbar import Progressbar
 import deon.util as util
 
 
 class Splitter():
 
     def __init__(self, dataset_folder, split):
-        self.progressbar = Progressbar()
         self.dataset_folder = dataset_folder
         self.split = split
 
@@ -27,10 +25,13 @@ class Splitter():
             self.get_total_by_percentage(total_nodef, self.split)
         train_file_path = self.create_dataset(
             data_sizes, nr_train_def, nr_train_nodef, 0)
+        print()
         test_file_path = self.create_dataset(
             data_sizes, nr_test_def, nr_test_nodef, 1)
+        print()
         validation_file_path = self.create_dataset(
             data_sizes, nr_validation_def, nr_validation_nodef, 2)
+        print()
         self.save_rio(
             [train_file_path, test_file_path, validation_file_path])
         pass
@@ -41,11 +42,13 @@ class Splitter():
             _max_nr_of_sentences, self.split)
         train_file_path = self.create_dataset(
             data_sizes, nr_train // 2, nr_train // 2, 0)
+        print()
         test_file_path = self.create_dataset(
             data_sizes, nr_test // 2, nr_test // 2, 1)
+        print()
         validation_file_path = self.create_dataset(
             data_sizes, nr_validation // 2, nr_validation // 2, 2)
-
+        print()
         self.save_rio(
             [train_file_path, test_file_path, validation_file_path])
         return
@@ -56,21 +59,31 @@ class Splitter():
         generate_rio_dataset(path_list, vocabolary)
 
     def create_dataset(self, data, nr_def, nr_nodef, pos):
-        filepath = os.path.join(self.dataset_folder, self.get_filename(pos))
+        total = nr_def + nr_nodef
+        count = 0
+        filename = self.get_filename(pos)
+        filepath = os.path.join(self.dataset_folder, filename)
         while nr_def > 0 or nr_nodef > 0:
-            for _, info in data.items():
-                self.progressbar.update()
+            finished = True
+            for name, info in data.items():
+                util.print_progress(filename, count, total)
                 if nr_def > 0 and info['def_split'][pos] > 0:
                     _def = next(info['def_iter'])
                     nr_def -= 1
                     info['def_split'][pos] -= 1
+                    count += 1
                     self.save_to(_def, filepath)
+                    finished = False
 
                 if nr_nodef > 0 and info['nodef_split'][pos] > 0:
                     _nodef = next(info['nodef_iter'])
                     nr_nodef -= 1
                     info['nodef_split'][pos] -= 1
+                    count += 1
                     self.save_to(_nodef, filepath)
+                    finished = False
+            if finished:
+                return filepath
         return filepath
 
     def save_to(self, line, filepath):

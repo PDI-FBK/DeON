@@ -48,8 +48,10 @@ class TrainExample():
 
 
 def generate_rio_dataset(ls_file_paths, vocabolary):
+    print()
     train_example = TrainExample()
     for tsv_path in ls_file_paths:
+        print('Saving rio file for:', tsv_path)
         rio_path = tsv_path + ".rio"
         if Path(rio_path).exists():
             continue
