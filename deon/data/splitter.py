@@ -87,9 +87,9 @@ class Splitter():
         return filepath
 
     def save_to(self, line, filepath):
-        sentence, _, _, _def, _ = line.split('\t')
+        sentence, topic, _, _def, _ = line.split('\t')
         with open(filepath, 'a') as f:
-            f.write('{} <EOS>\t{}\n'.format(sentence, _def))
+            f.write('{}\t{} <EOS>\t{}\n'.format(topic, sentence, _def))
 
     def get_filename(self, pos):
         if pos == 0:
