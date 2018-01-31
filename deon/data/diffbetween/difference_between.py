@@ -69,8 +69,7 @@ class DiffBetweenDataSource(DataSource):
                     pos = '?'
                     _topic = '?'
                 self._save_nodef(sentence, file_name, _topic, pos)
-            for sentence in classifier_result['anafora']:
-                pos = util.topic_position(topic, sentence)
+            for topic, sentence in classifier_result['anafora']:
                 self._save_anafora(sentence, file_name)
 
     def _save_def(self, sentence, url, topic, pos):

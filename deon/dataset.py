@@ -61,7 +61,7 @@ def build(source_keys=('w00',), dest='dataset', split=(70, 20, 10), tmp=None, fo
     [sources.resolve(key).pull(tmp, download) for key in source_keys]
     print('Cleaning duplications from tsv files')
     [util.clean_duplicates(os.path.join(tmp, filepath), tmp) for filepath in os.listdir(tmp) if filepath.endswith('.tsv')]
-    print('Splitting dataset', split, '...')
-    Splitter(tmp, split).split_dataset(balanced_split)
-    _move_to_dataset(dest, tmp)
+    # print('Splitting dataset', split, '...')
+    # Splitter(tmp, split).split_dataset(balanced_split)
+    # _move_to_dataset(dest, tmp)
     print('Done!')
