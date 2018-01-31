@@ -7,18 +7,26 @@ class TxtClassifier():
     def __init__(self):
         self.wcl_process = util.start_wcl_process()
 
-    def classify(self, txt, topic):
+    def classify(self, txt, topics):
         result = {'def': set(), 'nodef': set(), 'anafora': set()}
+        seen_sentences = set()
+        sentences = sent_tokenize(txt)
+        for sentence in sentences:
+            for topic in topics:
+                if not topic.isalnum():
+                    continue
+                classifier = self._classify(sentence, topic)
+                if not classifier:
+                    continue
+                seen_sentences.add(sentence)
+                sentence = ' '.join(util.tokenize(sentence))
+                result[classifier].add((topic, sentence))
 
-        if not topic.isalnum():
-            return result
-
-        for sentence in sent_tokenize(txt):
-            classifier = self._classify(sentence, topic)
-            if not classifier:
-                continue
-            sentence = ' '.join(util.tokenize(sentence))
-            result[classifier].add(sentence)
+        for sentence in sentences:
+            if sentence not in seen_sentences and self._is_no_def(sentence):
+                seen_sentences.add(sentence)
+                sentence = ' '.join(util.tokenize(sentence))
+                result['nodef'].add((topic[0], sentence))
         return result
 
     def _classify(self, sentence, topic):
@@ -28,8 +36,6 @@ class TxtClassifier():
             return 'anafora'
         if self._is_def(_sentence, _topic):
             return 'def'
-        if self._is_no_def(_sentence, _topic):
-            return 'nodef'
         return
 
     def _is_def(self, sentence, topic):
@@ -42,21 +48,8 @@ class TxtClassifier():
         ls = sentence.split()
         return ls[0] in blacklist
 
-    def _is_no_def(self, sentence, topic):
-        if self._is_fully_realted_to_topic(sentence, topic):
-            return True
-        return not self._is_in_blacklist(sentence) and\
-               not self._is_related_to_topic(sentence, topic)
-
-    def _is_related_to_topic(self, sentence, topic):
-        words = set(sentence.split())
-        for top in self._extract_subtopics(topic):
-            if top in words:
-                return True
-        return False
-
-    def _is_fully_realted_to_topic(self, sentence, topic):
-        return topic in sentence
+    def _is_no_def(self, sentence):
+        return not self._is_in_blacklist(sentence)
 
     def _is_in_blacklist(self, sentence):
         blacklist = ['therefore', 'although', 'however', 'another']

@@ -52,34 +52,24 @@ class DiffBetweenDataSource(DataSource):
             content = self._extract_text(article)
 
             defs_set = self._extract_topics_definitions_from(article, topics)
-            nodef_set = set()
-            anafora_set = set()
+            classifier_result = classifier.classify(content, topics)
+            classifier_result['def'].union(defs_set)
 
-            for topic in topics:
-                classifier_result = classifier.classify(content, topic)
-                defs_set = defs_set.union(classifier_result['def'])
-                nodef_set = nodef_set.union(classifier_result['nodef'])
-                anafora_set = anafora_set.union(classifier_result['anafora'])
-
-            for sentence in defs_set:
+            for topic, sentence in classifier_result['def']:
                 pos = util.topic_position(topic, sentence)
                 _topic = topic
                 if not pos:
                     pos = '?'
                     _topic = '?'
                 self._save_def(sentence, file_name, _topic, pos)
-            for sentence in nodef_set:
-                if sentence in defs_set:
-                    continue
-                if self.skip(sentence):
-                    continue
+            for topic, sentence in classifier_result['nodef']:
                 pos = util.topic_position(topic, sentence)
                 _topic = topic
                 if not pos:
                     pos = '?'
                     _topic = '?'
                 self._save_nodef(sentence, file_name, _topic, pos)
-            for sentence in anafora_set:
+            for sentence in classifier_result['anafora']:
                 pos = util.topic_position(topic, sentence)
                 self._save_anafora(sentence, file_name)
 
@@ -122,7 +112,7 @@ class DiffBetweenDataSource(DataSource):
                 lower_def = _def.lower()
 
                 if re.match(r"^((a)|(an) )?{} ((is)|(are)).+".format(topic), lower_def):
-                    result.add(' '.join(util.tokenize(_def)))
+                    result.add((topic, ' '.join(util.tokenize(_def))))
                     break
         return result
 
