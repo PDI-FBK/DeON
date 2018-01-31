@@ -52,7 +52,8 @@ class WCLDataSource(DataSource):
                 phrase = ' '.join(util.tokenize(phrase))
                 is_def = 1 if _def else 0
                 if is_def == 1:
-                    util.save_output(f_out_def_path, phrase, is_def, self.KEY)
+                    pos = util.topic_position(subject, phrase)
+                    util.save_output(f_out_def_path, phrase, is_def, self.KEY, topic=subject, topic_pos=pos)
                 else:
                     util.save_output(f_out_nodef_path, phrase, is_def, self.KEY)
 
