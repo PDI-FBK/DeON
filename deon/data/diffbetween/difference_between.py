@@ -37,10 +37,7 @@ class DiffBetweenDataSource(DataSource):
         print('\n\tDONE\n')
         return
 
-
-
     def _extract_from(self, folder_path):
-        # wcl_process = util.start_wcl_process()
         classifier = TxtClassifier()
         files = os.listdir(folder_path)
         for i, file_name in enumerate(files):
@@ -52,25 +49,22 @@ class DiffBetweenDataSource(DataSource):
             content = self._extract_text(article)
 
             defs_set = self._extract_topics_definitions_from(article, topics)
-            classifier_result = classifier.classify(content, topics)
-            classifier_result['def'].union(defs_set)
+            for t, s in defs_set:
+                pos = util.topic_position(t, s)
+                if not pos:
+                    pos = '?'
+                self._save_def(s, file_name, t, pos)
 
-            for topic, sentence in classifier_result['def']:
-                pos = util.topic_position(topic, sentence)
-                _topic = topic
+            for c, t, s in classifier.classify(content, topics):
+                pos = util.topic_position(t, s)
                 if not pos:
                     pos = '?'
-                    _topic = '?'
-                self._save_def(sentence, file_name, _topic, pos)
-            for topic, sentence in classifier_result['nodef']:
-                pos = util.topic_position(topic, sentence)
-                _topic = topic
-                if not pos:
-                    pos = '?'
-                    _topic = '?'
-                self._save_nodef(sentence, file_name, _topic, pos)
-            for topic, sentence in classifier_result['anafora']:
-                self._save_anafora(sentence, file_name)
+                if c == 'def':
+                    self._save_def(s, file_name, t, pos)
+                elif c == 'nodef':
+                    self._save_nodef(s, file_name, t, pos)
+                else:
+                    self._save_anafora(s, file_name)
 
     def _save_def(self, sentence, url, topic, pos):
         out_file = os.path.join(self.dest, self._OUT_FILES[0])

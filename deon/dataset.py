@@ -6,6 +6,8 @@ import tempfile
 import deon.data.sources as sources
 from deon.data.splitter import Splitter
 import deon.util as util
+from deon.rio.vocabolary_handler import VocabolaryHandler
+from deon.rio.train_example import *
 
 
 def _tmp_dir(tmp, force):
@@ -49,7 +51,7 @@ def _move_to_dataset(dest, tmp):
     pass
 
 
-def build(source_keys=('w00',), dest='dataset', split=(70, 20, 10), tmp=None, force=False, download=False, clean=False, balanced_split=False):
+def build(source_keys=('w00',), dest='dataset', split=(70, 20, 10), tmp=None, force=False, download=False, clean=False, balanced_split=False, ignore_from_files=[]):
     """Build the DeON dataset from differnt data sources."""
     print("Build the DeON dataset from differnt data sources.")
     dest = _dest_dir(dest, force)
@@ -62,6 +64,11 @@ def build(source_keys=('w00',), dest='dataset', split=(70, 20, 10), tmp=None, fo
     print('Cleaning duplications from tsv files')
     [util.clean_duplicates(os.path.join(tmp, filepath), tmp) for filepath in os.listdir(tmp) if filepath.endswith('.tsv')]
     print('Splitting dataset', split, '...')
-    Splitter(tmp, split).split_dataset(balanced_split)
+    Splitter(tmp, split, ignore_from_files).split_dataset(balanced_split)
     _move_to_dataset(dest, tmp)
     print('Done!')
+
+
+def generate_rio(path_list, tmp=None):
+    vocabolary = VocabolaryHandler(path_list, tmp).get_vocabolary()
+    generate_rio_dataset(path_list, vocabolary)

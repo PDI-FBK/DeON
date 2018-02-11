@@ -6,9 +6,14 @@ import deon.util as util
 
 class Splitter():
 
-    def __init__(self, dataset_folder, split):
+    def __init__(self, dataset_folder, split, ignore_from=[]):
         self.dataset_folder = dataset_folder
         self.split = split
+        self.ignore_lines = set()
+        for pathfile in ignore_from:
+            for line in self.read_from(pathfile):
+                sentence = line.split('\t')[1]
+                self.ignore_lines.add(sentence)
 
     def split_dataset(self, balanced=False):
         split = list(self.split)
@@ -68,20 +73,24 @@ class Splitter():
             for name, info in data.items():
                 util.print_progress(filename, count, total)
                 if nr_def > 0 and info['def_split'][pos] > 0:
-                    _def = next(info['def_iter'])
+                    finished = False
+                    line = next(info['def_iter'])
+                    if line.split()[0] in self.ignore_lines:
+                        continue
                     nr_def -= 1
                     info['def_split'][pos] -= 1
                     count += 1
-                    self.save_to(_def, filepath)
-                    finished = False
+                    self.save_to(line, filepath)
 
                 if nr_nodef > 0 and info['nodef_split'][pos] > 0:
-                    _nodef = next(info['nodef_iter'])
+                    finished = False
+                    line = next(info['nodef_iter'])
+                    if line.split()[0] in self.ignore_lines:
+                        continue
                     nr_nodef -= 1
                     info['nodef_split'][pos] -= 1
                     count += 1
-                    self.save_to(_nodef, filepath)
-                    finished = False
+                    self.save_to(line, filepath)
             if finished:
                 return filepath
         return filepath
@@ -133,7 +142,12 @@ class Splitter():
                 continue
 
             if names[0] not in result:
-                result[names[0]] = {}
+                result[names[0]] = {
+                    'def_count': 0,
+                    'nodef_count': 0,
+                    'def_split': [0, 0, 0],
+                    'nodef_split': [0, 0, 0]
+                }
             if 'nodef' in names:
                 result[names[0]]['nodef_count'] = _count_lines
                 result[names[0]]['nodef_split'] = _split
@@ -146,7 +160,7 @@ class Splitter():
 
     def max_nr_of_sentences(self, data):
         def_sum, nodef_sum = self._total_def_nodef_sentences(data)
-        return min(def_sum, nodef_sum)
+        return 2 * min(def_sum, nodef_sum)
 
     def _total_def_nodef_sentences(self, data):
         def_sum = 0

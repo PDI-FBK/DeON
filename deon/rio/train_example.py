@@ -57,7 +57,7 @@ def generate_rio_dataset(ls_file_paths, vocabolary):
             continue
         with tf.python_io.TFRecordWriter(rio_path) as writer:
             for line in util.read_from(tsv_path):
-                sentence, _def = line.split('\t')
+                topic, sentence, _def = line.split('\t')
                 words = sentence.split()
                 w_idx = [vocabolary.index(word) for word in words]
                 writer.write(train_example.encode(w_idx, [int(_def)])
