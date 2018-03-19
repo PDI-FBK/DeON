@@ -12,6 +12,8 @@ def print_progress(msg, done, total='oo', extra_msg=''):
 
 
 def save_output(file, definition, _def, url, topic='?', topic_pos='?'):
+    if topic == '?':
+        return
     len_words = len(definition.split())
     if len_words <= 2 or len_words > 300:
         return

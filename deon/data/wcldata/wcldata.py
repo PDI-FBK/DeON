@@ -6,13 +6,18 @@ import tarfile
 
 
 class WCLDataSource(DataSource):
+    """
+    NOTICE
+    Get wiki_really_good and wiki_really_bad from this LINK: http://data.dws.informatik.uni-mannheim.de/dustalov/wcl/
+    rename them into wiki_good and wiki_bad and substitute the existing ones
+    """
     KEY = 'wcl'
     _LINK = 'http://lcl.uniroma1.it/wcl/wcl_datasets_v1.2.tar.gz'
     _OUT_DEF_FILE = 'wcl.def.tsv'
     _OUT_NODEF_FILE = 'wcl.nodef.tsv'
     _SOURCE_UKWAC = 'wcl_datasets_v1.2/ukwac/ukwac_estimated_recall.txt'
-    _SOURCE_WIKI_GOOD = 'wcl_datasets_v1.2/wikipedia/wiki_good.txt'
-    _SOURCE_WIKI_BAD = 'wcl_datasets_v1.2/wikipedia/wiki_bad.txt'
+    _SOURCE_WIKI_GOOD = 'wcl_datasets_v1.2/wiki_good.txt'
+    _SOURCE_WIKI_BAD = 'wcl_datasets_v1.2/wiki_bad.txt'
 
     def pull(self, dest, download):
         print('Pulling from wcl dataset...')
@@ -55,7 +60,7 @@ class WCLDataSource(DataSource):
                     pos = util.topic_position(subject, phrase)
                     util.save_output(f_out_def_path, phrase, is_def, self.KEY, topic=subject, topic_pos=pos)
                 else:
-                    util.save_output(f_out_nodef_path, phrase, is_def, self.KEY)
+                    util.save_output(f_out_nodef_path, phrase, is_def, self.KEY, topic=subject)
 
         print('\tDONE\n')
         return

@@ -13,6 +13,7 @@ class Splitter():
         for pathfile in ignore_from:
             for line in self.read_from(pathfile):
                 sentence = line.split('\t')[1]
+                sentence = ' '.join(sentence.split())
                 self.ignore_lines.add(sentence)
 
     def split_dataset(self, balanced=False):
@@ -28,40 +29,25 @@ class Splitter():
             self.get_total_by_percentage(total_def, self.split)
         nr_train_nodef, nr_test_nodef, nr_validation_nodef = \
             self.get_total_by_percentage(total_nodef, self.split)
-        train_file_path = self.create_dataset(
-            data_sizes, nr_train_def, nr_train_nodef, 0)
+        self.create_dataset(data_sizes, nr_train_def, nr_train_nodef, 0)
         print()
-        test_file_path = self.create_dataset(
-            data_sizes, nr_test_def, nr_test_nodef, 1)
+        self.create_dataset(data_sizes, nr_test_def, nr_test_nodef, 1)
         print()
-        validation_file_path = self.create_dataset(
-            data_sizes, nr_validation_def, nr_validation_nodef, 2)
+        self.create_dataset(data_sizes, nr_validation_def, nr_validation_nodef, 2)
         print()
-        self.save_rio(
-            [train_file_path, test_file_path, validation_file_path])
         pass
 
     def _split_balanced(self, data_sizes):
         _max_nr_of_sentences = self.max_nr_of_sentences(data_sizes)
         nr_train, nr_test, nr_validation = self.get_total_by_percentage(
             _max_nr_of_sentences, self.split)
-        train_file_path = self.create_dataset(
-            data_sizes, nr_train // 2, nr_train // 2, 0)
+        self.create_dataset(data_sizes, nr_train // 2, nr_train // 2, 0)
         print()
-        test_file_path = self.create_dataset(
-            data_sizes, nr_test // 2, nr_test // 2, 1)
+        self.create_dataset(data_sizes, nr_test // 2, nr_test // 2, 1)
         print()
-        validation_file_path = self.create_dataset(
-            data_sizes, nr_validation // 2, nr_validation // 2, 2)
+        self.create_dataset(data_sizes, nr_validation // 2, nr_validation // 2, 2)
         print()
-        self.save_rio(
-            [train_file_path, test_file_path, validation_file_path])
         return
-
-    def save_rio(self, path_list):
-        vocabolary = VocabolaryHandler(path_list, self.dataset_folder)\
-                    .get_vocabolary()
-        generate_rio_dataset(path_list, vocabolary)
 
     def create_dataset(self, data, nr_def, nr_nodef, pos):
         total = nr_def + nr_nodef
@@ -73,27 +59,38 @@ class Splitter():
             for name, info in data.items():
                 util.print_progress(filename, count, total)
                 if nr_def > 0 and info['def_split'][pos] > 0:
-                    finished = False
-                    line = next(info['def_iter'])
-                    if line.split()[0] in self.ignore_lines:
-                        continue
-                    nr_def -= 1
-                    info['def_split'][pos] -= 1
-                    count += 1
-                    self.save_to(line, filepath)
+                    try:
+                        finished = False
+                        line = next(info['def_iter'])
+                        if self.do_not_consider(line):
+                            continue
+                        nr_def -= 1
+                        info['def_split'][pos] -= 1
+                        count += 1
+                        self.save_to(line, filepath)
+                    except StopIteration:
+                        info['def_split'][pos] = 0
 
                 if nr_nodef > 0 and info['nodef_split'][pos] > 0:
-                    finished = False
-                    line = next(info['nodef_iter'])
-                    if line.split()[0] in self.ignore_lines:
-                        continue
-                    nr_nodef -= 1
-                    info['nodef_split'][pos] -= 1
-                    count += 1
-                    self.save_to(line, filepath)
+                    try:
+                        finished = False
+                        line = next(info['nodef_iter'])
+                        if self.do_not_consider(line):
+                            continue
+                        nr_nodef -= 1
+                        info['nodef_split'][pos] -= 1
+                        count += 1
+                        self.save_to(line, filepath)
+                    except StopIteration:
+                        info['nodef_split'][pos] = 0
             if finished:
                 return filepath
         return filepath
+
+    def do_not_consider(self, line):
+        sentence, topic, _, _def, _ = line.split('\t')
+        sentence = ' '.join(sentence.split())
+        return sentence in self.ignore_lines or topic == '?'
 
     def save_to(self, line, filepath):
         sentence, topic, _, _def, _ = line.split('\t')
