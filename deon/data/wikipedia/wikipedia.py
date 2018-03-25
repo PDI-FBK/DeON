@@ -12,6 +12,8 @@ class WikipediaSource(DataSource):
     _INPUT_FOLDER = 'wikipedia'
     _OUT_FILES = ['wikipedia.def.tsv', 'wikipedia.nodef.tsv', 'wikipedia.anafora.tsv']
 
+    MAX_NODEF = 600000
+
     def pull(self, dest, download):
         print('Pulling from wikipedia dataset...\n')
 
@@ -44,20 +46,16 @@ class WikipediaSource(DataSource):
                 if not topic[0].isalnum() or topic[0] == '?':
                     continue
 
-                classifier_result = classifier.classify(content, topic)
-                for sentence in classifier_result['def']:
-                    pos = util.topic_position(topic, sentence)
-                    self._save_def(sentence, url, topic, pos)
-                for sentence in classifier_result['nodef']:
-                    pos = util.topic_position(topic, sentence)
-                    _topic = topic
+                for c, t, s in classifier.classify(content, set([topic])):
+                    pos = util.topic_position(t, s)
                     if not pos:
                         pos = '?'
-                        _topic = '?'
-                    self._save_nodef(sentence, url, _topic, pos)
-                for sentence in classifier_result['anafora']:
-                    pos = util.topic_position(topic, sentence)
-                    self._save_anafora(sentence, url)
+                    if c == 'def':
+                        self._save_def(s, url, t, pos)
+                    if c == 'nodef':
+                        self._save_nodef(s, url, t, pos)
+                    if c == 'anafora':
+                        self._save_anafora(s, url)
         return
 
     def _save_def(self, sentence, url, topic, pos):

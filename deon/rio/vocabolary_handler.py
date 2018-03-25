@@ -34,7 +34,7 @@ class VocabolaryHandler():
         for f_input_path in f_inputs:
             for line in util.read_from(f_input_path):
                 self.progressbar.update()
-                sentence, _ = line.split('\t')
+                _, sentence, _ = line.split('\t')
                 _ = [vocabolary.add(word) for word in sentence.split()]
         with open(vocab_path, 'w') as f:
             for _, word in vocabolary.items():

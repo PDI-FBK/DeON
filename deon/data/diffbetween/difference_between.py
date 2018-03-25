@@ -37,10 +37,7 @@ class DiffBetweenDataSource(DataSource):
         print('\n\tDONE\n')
         return
 
-
-
     def _extract_from(self, folder_path):
-        # wcl_process = util.start_wcl_process()
         classifier = TxtClassifier()
         files = os.listdir(folder_path)
         for i, file_name in enumerate(files):
@@ -52,36 +49,22 @@ class DiffBetweenDataSource(DataSource):
             content = self._extract_text(article)
 
             defs_set = self._extract_topics_definitions_from(article, topics)
-            nodef_set = set()
-            anafora_set = set()
-
-            for topic in topics:
-                classifier_result = classifier.classify(content, topic)
-                defs_set = defs_set.union(classifier_result['def'])
-                nodef_set = nodef_set.union(classifier_result['nodef'])
-                anafora_set = anafora_set.union(classifier_result['anafora'])
-
-            for sentence in defs_set:
-                pos = util.topic_position(topic, sentence)
-                _topic = topic
+            for t, s in defs_set:
+                pos = util.topic_position(t, s)
                 if not pos:
                     pos = '?'
-                    _topic = '?'
-                self._save_def(sentence, file_name, _topic, pos)
-            for sentence in nodef_set:
-                if sentence in defs_set:
-                    continue
-                if self.skip(sentence):
-                    continue
-                pos = util.topic_position(topic, sentence)
-                _topic = topic
+                self._save_def(s, file_name, t, pos)
+
+            for c, t, s in classifier.classify(content, topics):
+                pos = util.topic_position(t, s)
                 if not pos:
                     pos = '?'
-                    _topic = '?'
-                self._save_nodef(sentence, file_name, _topic, pos)
-            for sentence in anafora_set:
-                pos = util.topic_position(topic, sentence)
-                self._save_anafora(sentence, file_name)
+                if c == 'def':
+                    self._save_def(s, file_name, t, pos)
+                elif c == 'nodef':
+                    self._save_nodef(s, file_name, t, pos)
+                else:
+                    self._save_anafora(s, file_name)
 
     def _save_def(self, sentence, url, topic, pos):
         out_file = os.path.join(self.dest, self._OUT_FILES[0])
@@ -122,7 +105,7 @@ class DiffBetweenDataSource(DataSource):
                 lower_def = _def.lower()
 
                 if re.match(r"^((a)|(an) )?{} ((is)|(are)).+".format(topic), lower_def):
-                    result.add(' '.join(util.tokenize(_def)))
+                    result.add((topic, ' '.join(util.tokenize(_def))))
                     break
         return result
 

@@ -10,7 +10,7 @@ class Vocabolary():
     def index(self, word):
         if word in self._index:
             return self._index[word]
-        raise ValueError('Word \'%s\' is not in the vocabulary.' % word)
+        return self.add(word)
 
     def word(self, index):
         if index < 0 or index >= len(self._words):

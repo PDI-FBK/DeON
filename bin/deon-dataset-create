@@ -10,11 +10,11 @@ import deon.data.sources
 import deon.dataset
 
 DEFAULT_SOURCES = [
-    deon.data.sources.W00DataSource.KEY,
-    deon.data.sources.WCLDataSource.KEY,
     deon.data.sources.MsResearchSource.KEY,
     deon.data.sources.DiffBetweenDataSource.KEY,
     deon.data.sources.DictionarySource.KEY,
+    deon.data.sources.WCLDataSource.KEY,
+    deon.data.sources.W00DataSource.KEY,
     deon.data.sources.WikipediaSource.KEY
 ]
 
@@ -29,6 +29,8 @@ PARSER.add_argument('--seed', type=int, default=23, help='Random seed.')
 PARSER.add_argument('--download', action='store_true', help='If you want to force downloading the source files')
 PARSER.add_argument('--clean', action='store_true', help='If you want remove all generated *.tsv, *.rio and vocabolary. This does NOT remove the downloaded dataset.')
 PARSER.add_argument('--balanced_split', action='store_true', help='Use this if you want to have a well balanced dataset, where every file contributes the same percentage as the others maintaing nr of def/nodef balanced.')
+PARSER.add_argument('--ignore_from', type=str, nargs='*', help='File with sentences you want to ignore from the split.')
+PARSER.add_argument('--rio', type=str, nargs='*', help='Use this if you want to generate only rio files.')
 ARGS = PARSER.parse_args()
 # pylint: enable=C0301
 
@@ -36,6 +38,11 @@ ARGS = PARSER.parse_args()
 def main():
     """Main execution function."""
     # SET THE RANDOM SEED
+
+    if ARGS.rio is not None:
+        deon.dataset.generate_rio(ARGS.rio, ARGS.tmp)
+        return
+
     random.seed(ARGS.seed)
     sources = ARGS.sources if ARGS.sources else copy.copy(DEFAULT_SOURCES)
     split = tuple([int(item) for item in ARGS.split.split(',')])
@@ -47,7 +54,8 @@ def main():
         force=ARGS.force,
         download=ARGS.download,
         clean=ARGS.clean,
-        balanced_split=ARGS.balanced_split)
+        balanced_split=ARGS.balanced_split,
+        ignore_from_files=ARGS.ignore_from)
 
 
 if __name__ == '__main__':
